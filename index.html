@@ -151,7 +151,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
   </div>
   <div class="nav">
     <div class="nt on" onclick="showTab('p')">🗓 Pronostics</div>
-    <div class="nt" onclick="showTab('f')">🏅 Top 4</div>
+    <div class="nt" onclick="showTab('f')">🏅 Bonus</div>
     <div class="nt" onclick="showTab('c')">🏆 Classement</div>
     <div class="nt" onclick="showTab('r')">📋 Règles</div>
     <div class="nt hidden" id="adminTab" onclick="showTab('a')">⚙️ Admin</div>
@@ -167,12 +167,14 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
       <div class="rrow"><div class="re">✅</div><div class="rp">3</div><div class="rd"><strong>Bon vainqueur</strong><br>Victoire ou nul correct</div></div>
       <div class="rrow"><div class="re">❌</div><div class="rp">0</div><div class="rd"><strong>Mauvais pronostic</strong><br>Tant pis !</div></div>
     </div>
-    <div class="stitle">Bonus Top 4 final</div>
+    <div class="stitle">Bonus compétition</div>
     <div class="rc">
       <div class="rrow"><div class="re">🏆</div><div class="rp">20</div><div class="rd"><strong>Champion exact</strong><br>Tu as trouvé le vainqueur de la compétition</div></div>
       <div class="rrow"><div class="re">🥈</div><div class="rp">15</div><div class="rd"><strong>Deuxième exact</strong><br>Tu as trouvé le finaliste</div></div>
       <div class="rrow"><div class="re">🥉</div><div class="rp">10</div><div class="rd"><strong>Troisième exact</strong><br>Tu as trouvé l'équipe classée 3e</div></div>
       <div class="rrow"><div class="re">🎖️</div><div class="rp">10</div><div class="rd"><strong>Quatrième exact</strong><br>Tu as trouvé l'équipe classée 4e</div></div>
+      <div class="rrow"><div class="re">⚽</div><div class="rp">15</div><div class="rd"><strong>Meilleur buteur exact</strong><br>Nom du joueur en minuscule, sans accent</div></div>
+      <div class="rrow"><div class="re">🎁</div><div class="rp">15</div><div class="rd"><strong>Meilleur passeur exact</strong><br>Nom du joueur en minuscule, sans accent</div></div>
     </div>
     <div class="rc" style="margin-top:12px">
       <div style="font-size:13px;color:var(--tx2);line-height:1.7">
@@ -200,7 +202,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
       </div>
     </div>
 
-    <div class="stitle">Résultat final Top 4</div>
+    <div class="stitle">Résultat final & bonus</div>
     <div id="finalAdminBox" style="margin-bottom:20px"></div>
 
     <div class="stitle">Corriger un score</div>
@@ -421,6 +423,8 @@ async function loadSt(){
         second_place:fp.second_place||"",
         third_place:fp.third_place||"",
         fourth_place:fp.fourth_place||"",
+        top_scorer:fp.top_scorer||"",
+        top_assister:fp.top_assister||"",
         locked:!!fp.locked
       };
     });
@@ -431,7 +435,9 @@ async function loadSt(){
       winner:finalResultData.winner||"",
       second_place:finalResultData.second_place||"",
       third_place:finalResultData.third_place||"",
-      fourth_place:finalResultData.fourth_place||""
+      fourth_place:finalResultData.fourth_place||"",
+      top_scorer:finalResultData.top_scorer||"",
+      top_assister:finalResultData.top_assister||""
     }:null;
   }catch(e){
     console.error("Erreur Supabase loadSt:",e);
@@ -602,6 +608,15 @@ function competitionStartDate(){
 function finalPredictionsOpen(){
   return new Date() < new Date(competitionStartDate().getTime()+60000);
 }
+function cleanPlayerName(v){
+  return (v||"")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9 '\-]/g,"")
+    .replace(/\s+/g," ")
+    .trim();
+}
 function finalBonusPoints(pred,result){
   if(!pred||!result)return 0;
   let p=0;
@@ -609,6 +624,8 @@ function finalBonusPoints(pred,result){
   if(pred.second_place&&pred.second_place===result.second_place)p+=15;
   if(pred.third_place&&pred.third_place===result.third_place)p+=10;
   if(pred.fourth_place&&pred.fourth_place===result.fourth_place)p+=10;
+  if(pred.top_scorer&&cleanPlayerName(pred.top_scorer)===cleanPlayerName(result.top_scorer))p+=15;
+  if(pred.top_assister&&cleanPlayerName(pred.top_assister)===cleanPlayerName(result.top_assister))p+=15;
   return p;
 }
 function totalMatchPointsFor(ps){
@@ -624,30 +641,33 @@ function totalMatchPointsFor(ps){
 }
 function saveFinalChoice(field,val){
   if(!currentUser||isAdmin)return;
-  if(!finalPredictionsOpen()){toast("⏰ Le Top 4 est fermé");return;}
-  if(!finalPredictions[currentUser])finalPredictions[currentUser]={winner:"",second_place:"",third_place:"",fourth_place:"",locked:false};
+  if(!finalPredictionsOpen()){toast("⏰ Les bonus sont fermés");return;}
+  if(!finalPredictions[currentUser])finalPredictions[currentUser]={winner:"",second_place:"",third_place:"",fourth_place:"",top_scorer:"",top_assister:"",locked:false};
   finalPredictions[currentUser][field]=val;
 }
 function editFinalPrediction(){
-  if(!finalPredictionsOpen()){toast("⏰ Le Top 4 est fermé");return;}
+  if(!finalPredictionsOpen()){toast("⏰ Les bonus sont fermés");return;}
   if(!finalPredictions[currentUser])return;
   finalPredictions[currentUser].locked=false;
-  toast("✏️ Tu peux modifier ton Top 4 puis le revalider");
+  toast("✏️ Tu peux modifier tes bonus puis les revalider");
   renderFinalPrediction();
 }
 async function validateFinalPrediction(){
   if(!currentUser||isAdmin){toast("❌ Connecte-toi avec un compte joueur");return;}
-  if(!finalPredictionsOpen()){toast("⏰ Le Top 4 est fermé");return;}
+  if(!finalPredictionsOpen()){toast("⏰ Les bonus sont fermés");return;}
   const pred={
     winner:document.getElementById("fp_winner")?.value||"",
     second_place:document.getElementById("fp_second_place")?.value||"",
     third_place:document.getElementById("fp_third_place")?.value||"",
     fourth_place:document.getElementById("fp_fourth_place")?.value||"",
+    top_scorer:cleanPlayerName(document.getElementById("fp_top_scorer")?.value||""),
+    top_assister:cleanPlayerName(document.getElementById("fp_top_assister")?.value||""),
     locked:true
   };
   const vals=[pred.winner,pred.second_place,pred.third_place,pred.fourth_place];
   if(vals.some(v=>!v)){toast("⚠️ Choisis les 4 équipes avant de valider");return;}
   if(new Set(vals).size!==4){toast("⚠️ Tu dois choisir 4 équipes différentes");return;}
+  if(!pred.top_scorer||!pred.top_assister){toast("⚠️ Renseigne aussi le meilleur buteur et le meilleur passeur");return;}
   try{
     const { error } = await db.from("wc_final_predictions").upsert({
       pseudo:currentUser,
@@ -655,20 +675,25 @@ async function validateFinalPrediction(){
       second_place:pred.second_place,
       third_place:pred.third_place,
       fourth_place:pred.fourth_place,
+      top_scorer:pred.top_scorer,
+      top_assister:pred.top_assister,
       locked:true,
       updated_at:new Date().toISOString()
     },{onConflict:"pseudo"});
     if(error) throw error;
     finalPredictions[currentUser]=pred;
-    toast("✅ Top 4 validé dans Supabase");
+    toast("✅ Bonus validés dans Supabase");
     renderFinalPrediction();
   }catch(e){
-    console.error("Erreur validation Top 4:",e);
-    toast("❌ Top 4 non enregistré dans Supabase");
+    console.error("Erreur validation bonus:",e);
+    toast("❌ Bonus non enregistrés dans Supabase");
   }
 }
 function finalLine(label,value,pts){
   return `<div class="rrow"><div class="rp">${pts}</div><div class="rd"><strong>${label}</strong><br>${value?flag(value)+' '+esc(value):'<span style="color:var(--tx3)">Non renseigné</span>'}</div></div>`;
+}
+function finalPlayerLine(label,value,pts){
+  return `<div class="rrow"><div class="rp">${pts}</div><div class="rd"><strong>${label}</strong><br>${value?esc(value):'<span style="color:var(--tx3)">Non renseigné</span>'}</div></div>`;
 }
 function renderFinalPrediction(){
   const c=document.getElementById("finalPredBox");
@@ -676,21 +701,23 @@ function renderFinalPrediction(){
   const open=finalPredictionsOpen();
   const deadline=fdate(matches[0].date)+" à "+matches[0].time;
   if(isAdmin){
-    c.innerHTML=`<div class="stitle">Top 4 final</div><div class="infob">Connecte-toi avec un compte joueur pour saisir un Top 4. Le résultat réel se renseigne dans l'onglet Admin.</div>`;
+    c.innerHTML=`<div class="stitle">Bonus compétition</div><div class="infob">Connecte-toi avec un compte joueur pour saisir les bonus. Le résultat réel se renseigne dans l'onglet Admin.</div>`;
     return;
   }
-  const pred=finalPredictions[currentUser]||{winner:"",second_place:"",third_place:"",fourth_place:"",locked:false};
+  const pred=finalPredictions[currentUser]||{winner:"",second_place:"",third_place:"",fourth_place:"",top_scorer:"",top_assister:"",locked:false};
   const bonus=finalBonusPoints(pred,finalResult);
-  let html=`<div class="stitle">Top 4 final</div>
-    <div class="infob">Choisis les 4 premières équipes de la compétition. Deadline : <strong style="color:var(--gold)">${deadline}</strong>, soit 1 minute après le premier coup d'envoi.</div>`;
+  let html=`<div class="stitle">Bonus compétition</div>
+    <div class="infob">Choisis ton Top 4, le meilleur buteur et le meilleur passeur. Pour les joueurs : écris uniquement le nom en <strong style="color:var(--gold)">minuscule, sans accent et sans faute</strong>. Exemple : <strong style="color:var(--gold)">kylian mbappe</strong>. Deadline : <strong style="color:var(--gold)">${deadline}</strong>.</div>`;
   if(open&&!pred.locked){
     html+=`<div class="rc">
-      <div style="font-size:13px;color:var(--tx2);line-height:1.5;margin-bottom:12px">Tu peux modifier ces choix jusqu'à validation. Après validation, tu pourras encore cliquer sur Modifier tant que la compétition n'a pas commencé.</div>
+      <div style="font-size:13px;color:var(--tx2);line-height:1.5;margin-bottom:12px">Après validation, tu pourras encore cliquer sur Modifier tant que la compétition n'a pas commencé.</div>
       <label style="font-size:12px;color:var(--tx2)">🏆 Champion</label><select class="inp" id="fp_winner" onchange="saveFinalChoice('winner',this.value)" style="margin:6px 0 10px">${optionHtml(pred.winner)}</select>
       <label style="font-size:12px;color:var(--tx2)">🥈 Deuxième</label><select class="inp" id="fp_second_place" onchange="saveFinalChoice('second_place',this.value)" style="margin:6px 0 10px">${optionHtml(pred.second_place)}</select>
       <label style="font-size:12px;color:var(--tx2)">🥉 Troisième</label><select class="inp" id="fp_third_place" onchange="saveFinalChoice('third_place',this.value)" style="margin:6px 0 10px">${optionHtml(pred.third_place)}</select>
-      <label style="font-size:12px;color:var(--tx2)">🎖️ Quatrième</label><select class="inp" id="fp_fourth_place" onchange="saveFinalChoice('fourth_place',this.value)" style="margin:6px 0 14px">${optionHtml(pred.fourth_place)}</select>
-      <button class="btn btng" onclick="validateFinalPrediction()">🔒 Valider mon Top 4</button>
+      <label style="font-size:12px;color:var(--tx2)">🎖️ Quatrième</label><select class="inp" id="fp_fourth_place" onchange="saveFinalChoice('fourth_place',this.value)" style="margin:6px 0 10px">${optionHtml(pred.fourth_place)}</select>
+      <label style="font-size:12px;color:var(--tx2)">⚽ Meilleur buteur</label><input class="inp" id="fp_top_scorer" value="${esc(pred.top_scorer)}" placeholder="ex : kylian mbappe" oninput="this.value=cleanPlayerName(this.value);saveFinalChoice('top_scorer',this.value)" style="margin:6px 0 10px">
+      <label style="font-size:12px;color:var(--tx2)">🎁 Meilleur passeur</label><input class="inp" id="fp_top_assister" value="${esc(pred.top_assister)}" placeholder="ex : antoine griezmann" oninput="this.value=cleanPlayerName(this.value);saveFinalChoice('top_assister',this.value)" style="margin:6px 0 14px">
+      <button class="btn btng" onclick="validateFinalPrediction()">🔒 Valider mes bonus</button>
     </div>`;
   }else{
     html+=`<div class="rc">
@@ -698,9 +725,11 @@ function renderFinalPrediction(){
       ${finalLine('Deuxième',pred.second_place,15)}
       ${finalLine('Troisième',pred.third_place,10)}
       ${finalLine('Quatrième',pred.fourth_place,10)}
+      ${finalPlayerLine('Meilleur buteur',pred.top_scorer,15)}
+      ${finalPlayerLine('Meilleur passeur',pred.top_assister,15)}
     </div>`;
-    if(pred.locked&&open){html+=`<button class="btn btno" onclick="editFinalPrediction()">✏️ Modifier mon Top 4</button>`;}
-    if(!open){html+=`<div class="infob" style="margin-top:12px">🔒 Les pronostics Top 4 sont fermés depuis le début de la compétition.</div>`;}
+    if(pred.locked&&open){html+=`<button class="btn btno" onclick="editFinalPrediction()">✏️ Modifier mes bonus</button>`;}
+    if(!open){html+=`<div class="infob" style="margin-top:12px">🔒 Les bonus compétition sont fermés depuis le début de la compétition.</div>`;}
   }
   if(finalResult){
     html+=`<div class="stitle">Résultat réel</div><div class="rc">
@@ -708,6 +737,8 @@ function renderFinalPrediction(){
       ${finalLine('Deuxième',finalResult.second_place,15)}
       ${finalLine('Troisième',finalResult.third_place,10)}
       ${finalLine('Quatrième',finalResult.fourth_place,10)}
+      ${finalPlayerLine('Meilleur buteur',finalResult.top_scorer,15)}
+      ${finalPlayerLine('Meilleur passeur',finalResult.top_assister,15)}
       <div style="text-align:center;margin-top:12px;font-family:'Bebas Neue',cursive;font-size:28px;color:var(--gold)">+${bonus} pts bonus</div>
     </div>`;
   }
@@ -867,7 +898,7 @@ function renderLB(){
     const bonus=finalBonusPoints(finalPredictions[ps],finalResult);
     const row=document.createElement("div");row.className="lbr"+(isMe?" lbme":"");
     row.innerHTML=`<div class="lbrk ${rc}">${rk}</div><div class="lbav">${ps[0].toUpperCase()}</div>
-      <div class="lbn">${ps}${isMe?' <span style="color:var(--gl);font-size:11px">● toi</span>':''}<span>${nb} pronostic${nb>1?"s":""}${bonus?` · +${bonus} bonus Top 4`:''}</span></div>
+      <div class="lbn">${ps}${isMe?' <span style="color:var(--gl);font-size:11px">● toi</span>':''}<span>${nb} pronostic${nb>1?"s":""}${bonus?` · +${bonus} bonus`:''}</span></div>
       <div style="text-align:right"><div class="lbp">${data.totalPts}</div><div class="lbpl">points</div></div>`;
     c.appendChild(row);
   });
@@ -958,14 +989,16 @@ async function deletePlayer(pseudo){
 function renderFinalAdmin(){
   const c=document.getElementById("finalAdminBox");
   if(!c)return;
-  const r=finalResult||{winner:"",second_place:"",third_place:"",fourth_place:""};
+  const r=finalResult||{winner:"",second_place:"",third_place:"",fourth_place:"",top_scorer:"",top_assister:""};
   c.innerHTML=`<div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:14px">
-    <div class="infob" style="margin-bottom:12px">À renseigner à la fin de la compétition. Ces points bonus seront ajoutés automatiquement au classement.</div>
+    <div class="infob" style="margin-bottom:12px">À renseigner à la fin de la compétition. Pour les joueurs : minuscule, sans accent et même orthographe que la consigne donnée aux participants.</div>
     <label style="font-size:12px;color:var(--tx2)">🏆 Champion</label><select class="inp" id="fr_winner" style="margin:6px 0 10px">${optionHtml(r.winner)}</select>
     <label style="font-size:12px;color:var(--tx2)">🥈 Deuxième</label><select class="inp" id="fr_second_place" style="margin:6px 0 10px">${optionHtml(r.second_place)}</select>
     <label style="font-size:12px;color:var(--tx2)">🥉 Troisième</label><select class="inp" id="fr_third_place" style="margin:6px 0 10px">${optionHtml(r.third_place)}</select>
-    <label style="font-size:12px;color:var(--tx2)">🎖️ Quatrième</label><select class="inp" id="fr_fourth_place" style="margin:6px 0 14px">${optionHtml(r.fourth_place)}</select>
-    <button class="btn btng" onclick="saveFinalResult()">💾 Enregistrer le résultat final</button>
+    <label style="font-size:12px;color:var(--tx2)">🎖️ Quatrième</label><select class="inp" id="fr_fourth_place" style="margin:6px 0 10px">${optionHtml(r.fourth_place)}</select>
+    <label style="font-size:12px;color:var(--tx2)">⚽ Meilleur buteur</label><input class="inp" id="fr_top_scorer" value="${esc(r.top_scorer)}" placeholder="ex : kylian mbappe" oninput="this.value=cleanPlayerName(this.value)" style="margin:6px 0 10px">
+    <label style="font-size:12px;color:var(--tx2)">🎁 Meilleur passeur</label><input class="inp" id="fr_top_assister" value="${esc(r.top_assister)}" placeholder="ex : antoine griezmann" oninput="this.value=cleanPlayerName(this.value)" style="margin:6px 0 14px">
+    <button class="btn btng" onclick="saveFinalResult()">💾 Enregistrer les résultats bonus</button>
   </div>`;
 }
 async function saveFinalResult(){
@@ -973,11 +1006,14 @@ async function saveFinalResult(){
     winner:document.getElementById("fr_winner")?.value||"",
     second_place:document.getElementById("fr_second_place")?.value||"",
     third_place:document.getElementById("fr_third_place")?.value||"",
-    fourth_place:document.getElementById("fr_fourth_place")?.value||""
+    fourth_place:document.getElementById("fr_fourth_place")?.value||"",
+    top_scorer:cleanPlayerName(document.getElementById("fr_top_scorer")?.value||""),
+    top_assister:cleanPlayerName(document.getElementById("fr_top_assister")?.value||"")
   };
   const vals=[r.winner,r.second_place,r.third_place,r.fourth_place];
   if(vals.some(v=>!v)){toast("⚠️ Renseigne les 4 équipes");return;}
   if(new Set(vals).size!==4){toast("⚠️ Les 4 équipes doivent être différentes");return;}
+  if(!r.top_scorer||!r.top_assister){toast("⚠️ Renseigne aussi le meilleur buteur et le meilleur passeur");return;}
   try{
     const { error } = await db.from("wc_final_result").upsert({
       id:1,
@@ -985,17 +1021,19 @@ async function saveFinalResult(){
       second_place:r.second_place,
       third_place:r.third_place,
       fourth_place:r.fourth_place,
+      top_scorer:r.top_scorer,
+      top_assister:r.top_assister,
       updated_at:new Date().toISOString()
     },{onConflict:"id"});
     if(error) throw error;
     finalResult=r;
     recalc();
     await saveSt();
-    toast("✅ Résultat final sauvegardé");
-    renderFinalAdmin();renderLB();
+    toast("✅ Résultats bonus sauvegardés");
+    renderFinalAdmin();renderLB();renderFinalPrediction();
   }catch(e){
-    console.error("Erreur résultat final:",e);
-    toast("❌ Résultat final non sauvegardé");
+    console.error("Erreur résultat bonus:",e);
+    toast("❌ Résultats bonus non sauvegardés");
   }
 }
 
