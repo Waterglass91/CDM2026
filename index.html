@@ -98,7 +98,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 </head>
 <body>
 <div class="toast" id="toast"></div>
- 
+
 <div id="screenLogin">
   <div class="ls">
     <div class="ball">⚽</div>
@@ -111,7 +111,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     </div>
   </div>
 </div>
- 
+
 <div id="screenPin" class="hidden">
   <div class="pin-screen">
     <div style="font-size:48px;margin-bottom:12px" id="pinEmoji">🔑</div>
@@ -131,7 +131,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     <button class="btn btno btns" style="margin-top:20px;width:auto" onclick="backToLogin()">← Retour</button>
   </div>
 </div>
- 
+
 <div class="ov hidden" id="alModal">
   <div class="mod">
     <div class="mt">🔐 Accès admin</div>
@@ -143,7 +143,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     </div>
   </div>
 </div>
- 
+
 <div id="app" class="hidden">
   <div class="hdr">
     <div class="logo">⚽ CM 2026<span><span class="dot" id="dot"></span><span id="synclbl">Chargement…</span></span></div>
@@ -178,10 +178,10 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
   <div id="ta" class="main hidden fadein">
     <div class="infob">⚙️ Scores récupérés automatiquement. Tu peux forcer la mise à jour ou corriger manuellement.</div>
     <button class="btn" style="margin-bottom:16px" onclick="fetchScores(true)">🔄 Forcer la mise à jour</button>
- 
+
     <div class="stitle">Joueurs inscrits</div>
     <div id="playerList" style="margin-bottom:20px"></div>
- 
+
     <div class="stitle">Créer un compte</div>
     <div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:14px;margin-bottom:20px">
       <div style="display:flex;flex-direction:column;gap:10px">
@@ -190,18 +190,23 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
         <button class="btn" onclick="createPlayer()">➕ Créer le compte</button>
       </div>
     </div>
- 
+
     <div class="stitle">Corriger un score</div>
     <div id="alist"></div>
   </div>
 </div>
- 
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL = "https://qderhrrkxkhkrundxnwh.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_l5v8RTV9e3C7bIYwtt2tLA_VVssSSJJ";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const ADMIN_CODE="cm2026admin";
 const API_URL="https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
 const CACHE_MS=10*60*1000;
 const SESSION_KEY="wc2026_session";
- 
+
 // ============================================================
 // DONNÉES OFFICIELLES — horaires en heure de Paris (CEST = UTC+2)
 // ============================================================
@@ -297,7 +302,7 @@ const MATCHES_DATA = [
   ["Angleterre","Panama","2026-06-27","21:00","Groupe L"],
   ["Croatie","Ghana","2026-06-27","21:00","Groupe L"],
 ];
- 
+
 // Phases finales
 const KO_DATA = [
   // Huitièmes
@@ -307,7 +312,7 @@ const KO_DATA = [
   {phase:"3e place", n:1, dates:["2026-07-15"], times:["21:00"]},
   {phase:"Finale", n:1, dates:["2026-07-19"], times:["21:00"]},
 ];
- 
+
 const FLAGS={
   "Mexique":"🇲🇽","Afrique du Sud":"🇿🇦","Corée du Sud":"🇰🇷","Tchéquie":"🇨🇿",
   "Canada":"🇨🇦","Bosnie-Herzégovine":"🇧🇦","Qatar":"🇶🇦","Suisse":"🇨🇭",
@@ -323,7 +328,7 @@ const FLAGS={
   "Angleterre":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croatie":"🇭🇷","Ghana":"🇬🇭","Panama":"🇵🇦",
 };
 function flag(n){return FLAGS[n]||"🏳";}
- 
+
 function buildMatches(){
   const ms=[];
   MATCHES_DATA.forEach(([t1,t2,date,time,grp],i)=>{
@@ -337,39 +342,112 @@ function buildMatches(){
   });
   return ms;
 }
- 
+
 let matches=buildMatches();
 let pronostics={},players={},pinStore={};
 let currentUser=null,isAdmin=false,lastFetch=0;
 let pinPseudo="",pinBuffer="",pinMode="";
- 
+
 function mkey(m){return m.id+"";}
- 
+
 function hashPin(pseudo,pin){
   const str=pseudo.toLowerCase()+":"+pin;let h=0;
   for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h|=0;}
   return h.toString(36);
 }
- 
+
 function saveSession(p){try{localStorage.setItem(SESSION_KEY,p);}catch(e){}}
 function loadSession(){try{return localStorage.getItem(SESSION_KEY);}catch(e){return null;}}
 function clearSession(){try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
- 
+
 async function loadSt(){
   try{
-    const r=await window.storage.get("wc2026_v5",true);
-    if(r?.value){
-      const d=JSON.parse(r.value);
-      pronostics=d.pronostics||{};players=d.players||{};pinStore=d.pinStore||{};
-      if(d.scores)d.scores.forEach(s=>{const m=matches.find(x=>mkey(x)===s.k);if(m)m.score={ft:s.ft,_m:s.m};});
-    }
-  }catch(e){}
+    const { data: playersData, error: playersError } = await db.from("wc_players").select("*");
+    if(playersError) throw playersError;
+
+    players={};
+    pinStore={};
+    (playersData||[]).forEach(p=>{
+      players[p.pseudo]={totalPts:p.total_pts||0};
+      pinStore[p.pseudo.toLowerCase()]=p.pin_hash;
+    });
+
+    const { data: pronosticsData, error: pronosticsError } = await db.from("wc_pronostics").select("*");
+    if(pronosticsError) throw pronosticsError;
+
+    pronostics={};
+    (pronosticsData||[]).forEach(pr=>{
+      if(!pronostics[pr.match_id]) pronostics[pr.match_id]={};
+      pronostics[pr.match_id][pr.pseudo]={home:pr.home??"",away:pr.away??""};
+    });
+
+    const { data: scoresData, error: scoresError } = await db.from("wc_scores").select("*");
+    if(scoresError) throw scoresError;
+
+    // Remettre les scores à zéro avant de recharger ceux de Supabase
+    matches.forEach(m=>{m.score=null;});
+    (scoresData||[]).forEach(s=>{
+      const m=matches.find(x=>mkey(x)===s.match_id);
+      if(m && s.home!==null && s.away!==null){
+        m.score={ft:[s.home,s.away],_m:!!s.manual};
+      }
+    });
+  }catch(e){
+    console.error("Erreur Supabase loadSt:",e);
+    toast("❌ Erreur chargement Supabase");
+  }
 }
 async function saveSt(){
-  const sc=matches.filter(m=>m.score).map(m=>({k:mkey(m),ft:m.score.ft,m:m.score._m||false}));
-  try{await window.storage.set("wc2026_v5",JSON.stringify({pronostics,players,pinStore,scores:sc}),true);}catch(e){}
+  try{
+    const playerRows=Object.entries(players).map(([pseudo,data])=>({
+      pseudo,
+      pin_hash:pinStore[pseudo.toLowerCase()]||"",
+      total_pts:data.totalPts||0
+    })).filter(p=>p.pin_hash);
+
+    if(playerRows.length){
+      const { error } = await db.from("wc_players").upsert(playerRows,{onConflict:"pseudo"});
+      if(error) throw error;
+    }
+
+    const pronosticRows=[];
+    Object.entries(pronostics).forEach(([match_id,byPlayer])=>{
+      Object.entries(byPlayer).forEach(([pseudo,pr])=>{
+        if(pr.home!=="" || pr.away!==""){
+          pronosticRows.push({
+            match_id,
+            pseudo,
+            home:pr.home===""?null:Number(pr.home),
+            away:pr.away===""?null:Number(pr.away),
+            updated_at:new Date().toISOString()
+          });
+        }
+      });
+    });
+
+    if(pronosticRows.length){
+      const { error } = await db.from("wc_pronostics").upsert(pronosticRows,{onConflict:"match_id,pseudo"});
+      if(error) throw error;
+    }
+
+    const scoreRows=matches.filter(m=>m.score?.ft).map(m=>({
+      match_id:mkey(m),
+      home:m.score.ft[0],
+      away:m.score.ft[1],
+      manual:!!m.score._m,
+      updated_at:new Date().toISOString()
+    }));
+
+    if(scoreRows.length){
+      const { error } = await db.from("wc_scores").upsert(scoreRows,{onConflict:"match_id"});
+      if(error) throw error;
+    }
+  }catch(e){
+    console.error("Erreur Supabase saveSt:",e);
+    toast("❌ Erreur sauvegarde Supabase");
+  }
 }
- 
+
 async function fetchScores(force=false){
   if(!force&&Date.now()-lastFetch<CACHE_MS)return;
   setSync("spin","Mise à jour…");
@@ -393,7 +471,7 @@ function refresh(){
   if(!document.getElementById("tp").classList.contains("hidden"))renderMatches();
   if(!document.getElementById("tc").classList.contains("hidden"))renderLB();
 }
- 
+
 // AUTH
 function submitPseudo(){
   const p=document.getElementById("pseudo").value.trim();
@@ -427,9 +505,16 @@ function pinShakeError(msg){
 async function validatePin(){
   const h=hashPin(pinPseudo,pinBuffer);
   if(pinMode==="create"){
-    pinStore[pinPseudo.toLowerCase()]=h;
-    if(!players[pinPseudo])players[pinPseudo]={totalPts:0};
-    await saveSt();saveSession(pinPseudo);currentUser=pinPseudo;isAdmin=false;enterApp();
+    try{
+      const { error } = await db.from("wc_players").insert({pseudo:pinPseudo,pin_hash:h,total_pts:0});
+      if(error) throw error;
+      pinStore[pinPseudo.toLowerCase()]=h;
+      players[pinPseudo]={totalPts:0};
+      saveSession(pinPseudo);currentUser=pinPseudo;isAdmin=false;enterApp();
+    }catch(e){
+      console.error("Erreur création compte:",e);
+      pinShakeError("Impossible de créer ce compte");
+    }
   }else{
     if(pinStore[pinPseudo.toLowerCase()]===h){saveSession(pinPseudo);currentUser=pinPseudo;isAdmin=false;enterApp();}
     else pinShakeError("PIN incorrect, réessaie");
@@ -453,7 +538,7 @@ function adminLogin(){
   if(document.getElementById("alCode").value!==ADMIN_CODE){toast("❌ Code incorrect");return;}
   closeAL();currentUser="Admin";isAdmin=true;enterApp();
 }
- 
+
 function showTab(t){
   ["p","c","r","a"].forEach(x=>document.getElementById("t"+x).classList.add("hidden"));
   document.querySelectorAll(".nt").forEach(el=>el.classList.remove("on"));
@@ -461,7 +546,7 @@ function showTab(t){
   const idx=["p","c","r","a"].indexOf(t);document.querySelectorAll(".nt")[idx]?.classList.add("on");
   if(t==="p")renderMatches();if(t==="c")renderLB();if(t==="a")renderAdmin();
 }
- 
+
 // Status — les horaires sont déjà en heure de Paris (CEST = UTC+2)
 function getStatus(m){
   if(m.score?.ft)return"done";
@@ -474,7 +559,7 @@ function getStatus(m){
   return now>=new Date(koUTC.getTime()+60000)?"locked":"open";
 }
 function pad(n){return n.toString().padStart(2,"0");}
- 
+
 function pts(ph,pa,rh,ra){
   if([ph,pa,rh,ra].some(x=>x===null||x===undefined||x===""))return null;
   [ph,pa,rh,ra]=[ph,pa,rh,ra].map(Number);
@@ -492,12 +577,12 @@ function recalc(){
   });
   Object.keys(players).forEach(ps=>{players[ps].totalPts=p[ps]||0;});
 }
- 
+
 function isNightMatch(time){
   const h=parseInt((time||"21:00").split(":")[0]);
   return h>=0&&h<8;
 }
- 
+
 function renderMatches(){
   const c=document.getElementById("mlist");c.innerHTML="";let cur=null;
   matches.forEach(m=>{
@@ -505,7 +590,7 @@ function renderMatches(){
     c.appendChild(buildCard(m));
   });
 }
- 
+
 function buildCard(m){
   const st=getStatus(m),key=mkey(m);
   const up=pronostics[key]?.[currentUser]||{home:"",away:""};
@@ -514,7 +599,7 @@ function buildCard(m){
   const slbl={open:"Ouvert",locked:"Fermé",done:"Terminé"}[st];
   const scls={open:"sopen",locked:"slocked",done:"sdone"}[st];
   const nuit=isNightMatch(m.time)?`<span class="nuit">🌙 nuit</span>`:"";
- 
+
   let sh="";
   if(st==="open"&&!isAdmin){
     sh=`<div style="display:flex;align-items:center;gap:6px">
@@ -531,7 +616,7 @@ function buildCard(m){
   else{fl=`<span style="font-size:11px;color:var(--tx3)">${fdate(m.date)}</span>`;}
   let pb="";
   if(pv!==null){const cls=pv===8?"p8":pv===5?"p5":pv===3?"p3":"p0";pb=`<span class="pb ${cls}">+${pv} pts</span>`;}
- 
+
   const div=document.createElement("div");div.className="mc";
   div.innerHTML=`<div class="mh"><span class="mdate">${fdate(m.date)} · ${m.time}${nuit}</span><span class="ms ${scls}">${slbl}</span></div>
     <div class="mb">
@@ -542,15 +627,31 @@ function buildCard(m){
     <div class="mf">${fl}${pb}</div>`;
   return div;
 }
- 
+
 async function saveP(key,side,val){
   const m=matches.find(x=>mkey(x)===key);
   if(!m||getStatus(m)!=="open"){toast("⏰ Pronostics fermés !");return;}
   if(!pronostics[key])pronostics[key]={};
   if(!pronostics[key][currentUser])pronostics[key][currentUser]={home:"",away:""};
-  pronostics[key][currentUser][side]=val;await saveSt();
+  pronostics[key][currentUser][side]=val;
+
+  const pr=pronostics[key][currentUser];
+  try{
+    const { error } = await db.from("wc_pronostics").upsert({
+      match_id:key,
+      pseudo:currentUser,
+      home:pr.home===""?null:Number(pr.home),
+      away:pr.away===""?null:Number(pr.away),
+      updated_at:new Date().toISOString()
+    },{onConflict:"match_id,pseudo"});
+    if(error) throw error;
+    toast("✅ Pronostic sauvegardé");
+  }catch(e){
+    console.error("Erreur sauvegarde pronostic:",e);
+    toast("❌ Pronostic non sauvegardé");
+  }
 }
- 
+
 function renderLB(){
   recalc();const c=document.getElementById("lb");c.innerHTML="";
   const list=Object.entries(players).filter(([p])=>p!=="Admin").sort((a,b)=>b[1].totalPts-a[1].totalPts);
@@ -566,7 +667,7 @@ function renderLB(){
     c.appendChild(row);
   });
 }
- 
+
 function renderPlayerList(){
   const c=document.getElementById("playerList");c.innerHTML="";
   const list=Object.keys(players).filter(p=>p!=="Admin");
@@ -592,41 +693,61 @@ function renderPlayerList(){
     c.appendChild(div);
   });
 }
- 
+
 async function createPlayer(){
   const pseudo=document.getElementById("newPseudo").value.trim();
   const pin=document.getElementById("newPin").value.trim();
   if(!pseudo||pseudo.length<2){toast("❌ Pseudo trop court");return;}
   if(pin.length!==4||isNaN(pin)){toast("❌ PIN doit être 4 chiffres");return;}
   if(players[pseudo]){toast("❌ Ce pseudo existe déjà");return;}
-  players[pseudo]={totalPts:0};
-  pinStore[pseudo.toLowerCase()]=hashPin(pseudo,pin);
-  await saveSt();
-  document.getElementById("newPseudo").value="";
-  document.getElementById("newPin").value="";
-  toast("✅ Compte créé : "+pseudo);
-  renderPlayerList();
+  const h=hashPin(pseudo,pin);
+  try{
+    const { error } = await db.from("wc_players").insert({pseudo,pin_hash:h,total_pts:0});
+    if(error) throw error;
+    players[pseudo]={totalPts:0};
+    pinStore[pseudo.toLowerCase()]=h;
+    document.getElementById("newPseudo").value="";
+    document.getElementById("newPin").value="";
+    toast("✅ Compte créé : "+pseudo);
+    renderPlayerList();
+  }catch(e){
+    console.error("Erreur création joueur:",e);
+    toast("❌ Impossible de créer le compte");
+  }
 }
- 
+
 async function resetPin(pseudo){
   const newPin=prompt("Nouveau PIN à 4 chiffres pour "+pseudo+" :");
   if(!newPin||newPin.length!==4||isNaN(newPin)){toast("❌ PIN invalide");return;}
-  pinStore[pseudo.toLowerCase()]=hashPin(pseudo,newPin);
-  await saveSt();
-  toast("✅ PIN réinitialisé pour "+pseudo);
+  const h=hashPin(pseudo,newPin);
+  try{
+    const { error } = await db.from("wc_players").update({pin_hash:h}).eq("pseudo",pseudo);
+    if(error) throw error;
+    pinStore[pseudo.toLowerCase()]=h;
+    toast("✅ PIN réinitialisé pour "+pseudo);
+  }catch(e){
+    console.error("Erreur reset PIN:",e);
+    toast("❌ Impossible de réinitialiser le PIN");
+  }
 }
- 
+
 async function deletePlayer(pseudo){
   if(!confirm("Supprimer le compte de "+pseudo+" ? Ses pronostics seront aussi supprimés.")){return;}
-  delete players[pseudo];
-  delete pinStore[pseudo.toLowerCase()];
-  // Supprimer ses pronostics
-  Object.keys(pronostics).forEach(k=>{delete pronostics[k][pseudo];});
-  recalc();await saveSt();
-  toast("🗑 Compte supprimé : "+pseudo);
-  renderPlayerList();renderLB();
+  try{
+    const { error } = await db.from("wc_players").delete().eq("pseudo",pseudo);
+    if(error) throw error;
+    delete players[pseudo];
+    delete pinStore[pseudo.toLowerCase()];
+    Object.keys(pronostics).forEach(k=>{delete pronostics[k][pseudo];});
+    recalc();
+    toast("🗑 Compte supprimé : "+pseudo);
+    renderPlayerList();renderLB();
+  }catch(e){
+    console.error("Erreur suppression joueur:",e);
+    toast("❌ Impossible de supprimer le compte");
+  }
 }
- 
+
 function renderAdmin(){
   renderPlayerList();
   const c=document.getElementById("alist");c.innerHTML="";
@@ -649,13 +770,30 @@ async function setM(key,idx,val){
   const m=matches.find(x=>mkey(x)===key);if(!m)return;
   if(!m.score?.ft)m.score={ft:[null,null],_m:true};
   m.score.ft[idx]=val===""?null:parseInt(val);m.score._m=true;
-  if(m.score.ft[0]!==null&&m.score.ft[1]!==null){recalc();await saveSt();toast("✅ Score sauvegardé");}
+  if(m.score.ft[0]!==null&&m.score.ft[1]!==null){
+    recalc();
+    try{
+      const { error } = await db.from("wc_scores").upsert({
+        match_id:key,
+        home:m.score.ft[0],
+        away:m.score.ft[1],
+        manual:true,
+        updated_at:new Date().toISOString()
+      },{onConflict:"match_id"});
+      if(error) throw error;
+      await saveSt();
+      toast("✅ Score sauvegardé");
+    }catch(e){
+      console.error("Erreur sauvegarde score:",e);
+      toast("❌ Score non sauvegardé");
+    }
+  }
 }
- 
+
 function fdate(d){if(!d)return"";const[,mo,dy]=d.split("-");return parseInt(dy)+" "+["","jan","fév","mar","avr","mai","juin","juil","août","sep","oct","nov","déc"][parseInt(mo)];}
 function hhmm(d){return d.getHours().toString().padStart(2,"0")+":"+d.getMinutes().toString().padStart(2,"0");}
 function toast(msg){const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2500);}
- 
+
 async function init(){
   setSync("spin","Chargement…");
   await loadSt();recalc();
