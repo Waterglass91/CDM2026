@@ -713,7 +713,7 @@ function renderFinalPrediction(){
   const pred=finalPredictions[currentUser]||{winner:"",second_place:"",third_place:"",fourth_place:"",top_scorer:"",top_assister:"",locked:false};
   const bonus=finalBonusPoints(pred,finalResult);
   let html=`<div class="stitle">Bonus compétition</div>
-    <div class="infob">Choisis ton Top 4, le meilleur buteur et le meilleur passeur. Pour les joueurs : écris uniquement le nom en <strong style="color:var(--gold)">minuscule, sans accent et sans faute</strong>. Exemple : <strong style="color:var(--gold)">kylian mbappe</strong>. Deadline : <strong style="color:var(--gold)">${deadline}</strong>.</div>`;
+    <div class="infob">Choisis ton Top 4, le meilleur buteur et le meilleur passeur. Pour les joueurs : écris uniquement le nom en <strong style="color:var(--gold)">minuscule, sans accent et sans faute</strong>. Exemple : <strong style="color:var(--gold)">mbappe</strong>. Deadline : <strong style="color:var(--gold)">${deadline}</strong>.</div>`;
   if(open&&!pred.locked){
     html+=`<div class="rc">
       <div style="font-size:13px;color:var(--tx2);line-height:1.5;margin-bottom:12px">Après validation, tu pourras encore cliquer sur Modifier tant que la compétition n'a pas commencé.</div>
@@ -721,8 +721,8 @@ function renderFinalPrediction(){
       <label style="font-size:12px;color:var(--tx2)">🥈 Deuxième</label><select class="inp" id="fp_second_place" onchange="saveFinalChoice('second_place',this.value)" style="margin:6px 0 10px">${optionHtml(pred.second_place)}</select>
       <label style="font-size:12px;color:var(--tx2)">🥉 Troisième</label><select class="inp" id="fp_third_place" onchange="saveFinalChoice('third_place',this.value)" style="margin:6px 0 10px">${optionHtml(pred.third_place)}</select>
       <label style="font-size:12px;color:var(--tx2)">🎖️ Quatrième</label><select class="inp" id="fp_fourth_place" onchange="saveFinalChoice('fourth_place',this.value)" style="margin:6px 0 10px">${optionHtml(pred.fourth_place)}</select>
-      <label style="font-size:12px;color:var(--tx2)">⚽ Meilleur buteur</label><input class="inp" id="fp_top_scorer" value="${esc(pred.top_scorer)}" placeholder="ex : kylian mbappe" oninput="this.value=cleanPlayerName(this.value);saveFinalChoice('top_scorer',this.value)" style="margin:6px 0 10px">
-      <label style="font-size:12px;color:var(--tx2)">🎁 Meilleur passeur</label><input class="inp" id="fp_top_assister" value="${esc(pred.top_assister)}" placeholder="ex : antoine griezmann" oninput="this.value=cleanPlayerName(this.value);saveFinalChoice('top_assister',this.value)" style="margin:6px 0 14px">
+      <label style="font-size:12px;color:var(--tx2)">⚽ Meilleur buteur</label><input class="inp" id="fp_top_scorer" value="${esc(pred.top_scorer)}" placeholder="ex : mbappe" oninput="this.value=cleanPlayerName(this.value);saveFinalChoice('top_scorer',this.value)" style="margin:6px 0 10px">
+      <label style="font-size:12px;color:var(--tx2)">🎁 Meilleur passeur</label><input class="inp" id="fp_top_assister" value="${esc(pred.top_assister)}" placeholder="ex : de bruyne" oninput="this.value=cleanPlayerName(this.value);saveFinalChoice('top_assister',this.value)" style="margin:6px 0 14px">
       <button class="btn btng" onclick="validateFinalPrediction()">🔒 Valider mes bonus</button>
     </div>`;
   }else{
@@ -1070,13 +1070,13 @@ function renderFinalAdmin(){
   if(!c)return;
   const r=finalResult||{winner:"",second_place:"",third_place:"",fourth_place:"",top_scorer:"",top_assister:""};
   c.innerHTML=`<div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:14px">
-    <div class="infob" style="margin-bottom:12px">À renseigner à la fin de la compétition. Pour les joueurs : minuscule, sans accent et même orthographe que la consigne donnée aux participants.</div>
+    <div class="infob" style="margin-bottom:12px">À renseigner à la fin de la compétition. Pour les joueurs : uniquement le nom, en minuscule, sans accent et avec la même orthographe que la consigne donnée aux participants. Exemple : mbappe, de bruyne.</div>
     <label style="font-size:12px;color:var(--tx2)">🏆 Champion</label><select class="inp" id="fr_winner" style="margin:6px 0 10px">${optionHtml(r.winner)}</select>
     <label style="font-size:12px;color:var(--tx2)">🥈 Deuxième</label><select class="inp" id="fr_second_place" style="margin:6px 0 10px">${optionHtml(r.second_place)}</select>
     <label style="font-size:12px;color:var(--tx2)">🥉 Troisième</label><select class="inp" id="fr_third_place" style="margin:6px 0 10px">${optionHtml(r.third_place)}</select>
     <label style="font-size:12px;color:var(--tx2)">🎖️ Quatrième</label><select class="inp" id="fr_fourth_place" style="margin:6px 0 10px">${optionHtml(r.fourth_place)}</select>
-    <label style="font-size:12px;color:var(--tx2)">⚽ Meilleur buteur</label><input class="inp" id="fr_top_scorer" value="${esc(r.top_scorer)}" placeholder="ex : kylian mbappe" oninput="this.value=cleanPlayerName(this.value)" style="margin:6px 0 10px">
-    <label style="font-size:12px;color:var(--tx2)">🎁 Meilleur passeur</label><input class="inp" id="fr_top_assister" value="${esc(r.top_assister)}" placeholder="ex : antoine griezmann" oninput="this.value=cleanPlayerName(this.value)" style="margin:6px 0 14px">
+    <label style="font-size:12px;color:var(--tx2)">⚽ Meilleur buteur</label><input class="inp" id="fr_top_scorer" value="${esc(r.top_scorer)}" placeholder="ex : mbappe" oninput="this.value=cleanPlayerName(this.value)" style="margin:6px 0 10px">
+    <label style="font-size:12px;color:var(--tx2)">🎁 Meilleur passeur</label><input class="inp" id="fr_top_assister" value="${esc(r.top_assister)}" placeholder="ex : de bruyne" oninput="this.value=cleanPlayerName(this.value)" style="margin:6px 0 14px">
     <button class="btn btng" onclick="saveFinalResult()">💾 Enregistrer les résultats bonus</button>
   </div>`;
 }
