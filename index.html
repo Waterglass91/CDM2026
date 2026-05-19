@@ -367,6 +367,7 @@ function buildMatches(){
 let matches=buildMatches();
 let pronostics={},players={},pinStore={},finalPredictions={},finalResult=null;
 let currentUser=null,isAdmin=false,lastFetch=0;
+let selectedMatchDate=null;
 let pinPseudo="",pinBuffer="",pinMode="";
 
 function mkey(m){return m.id+"";}
@@ -575,7 +576,7 @@ function enterApp(){
   document.getElementById("app").classList.remove("hidden");
   document.getElementById("av").textContent=isAdmin?"⚙":currentUser[0].toUpperCase();
   document.getElementById("adminTab").classList.toggle("hidden",!isAdmin);
-  showTab("p");fetchScores(true);setInterval(()=>fetchScores(false),CACHE_MS);
+  selectedMatchDate=getDefaultMatchDate();showTab("p");fetchScores(true);setInterval(()=>fetchScores(false),CACHE_MS);setInterval(()=>{if(!document.getElementById("tp").classList.contains("hidden"))renderMatches();},30000);
 }
 function logout(){
   clearSession();currentUser=null;isAdmin=false;pinBuffer="";pinPseudo="";
@@ -784,12 +785,69 @@ function isNightMatch(time){
   return h>=0&&h<8;
 }
 
+function allMatchDates(){
+  return [...new Set(matches.map(m=>m.date))].sort();
+}
+function parisTodayKey(){
+  try{
+    return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  }catch(e){
+    return new Date().toISOString().slice(0,10);
+  }
+}
+function getDefaultMatchDate(){
+  const dates=allMatchDates();
+  const today=parisTodayKey();
+  if(dates.includes(today))return today;
+  return dates.find(d=>d>today)||dates[dates.length-1]||today;
+}
+function selectMatchDate(date){
+  selectedMatchDate=date;
+  renderMatches();
+}
+function shiftMatchDate(delta){
+  const dates=allMatchDates();
+  const idx=Math.max(0,dates.indexOf(selectedMatchDate));
+  const next=dates[Math.min(dates.length-1,Math.max(0,idx+delta))];
+  if(next)selectMatchDate(next);
+}
+function dayButtonLabel(date){
+  const count=matches.filter(m=>m.date===date).length;
+  return `${fdate(date)} · ${count} match${count>1?'s':''}`;
+}
+function renderDaySelector(){
+  const dates=allMatchDates();
+  const idx=dates.indexOf(selectedMatchDate);
+  const buttons=dates.map(d=>`<button class="btns ${d===selectedMatchDate?'btng':'btno'}" style="white-space:nowrap;border-radius:20px" onclick="selectMatchDate('${d}')">${dayButtonLabel(d)}</button>`).join('');
+  return `<div class="infob">📅 L'appli affiche automatiquement la journée en cours, ou la prochaine journée avec des matchs.</div>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <button class="btn btno btns" ${idx<=0?'disabled style="opacity:.35"':'style=""'} onclick="shiftMatchDate(-1)">← Jour précédent</button>
+    <button class="btn btno btns" ${idx>=dates.length-1?'disabled style="opacity:.35"':'style=""'} onclick="shiftMatchDate(1)">Jour suivant →</button>
+  </div>
+  <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-bottom:16px;padding-bottom:4px">${buttons}</div>`;
+}
+
 function renderMatches(){
-  const c=document.getElementById("mlist");c.innerHTML="";let cur=null;
-  matches.forEach(m=>{
-    if(m.phase!==cur){cur=m.phase;const el=document.createElement("div");el.style.marginTop="20px";el.innerHTML=`<span class="gbadge">${m.phase}</span>`;c.appendChild(el);}
+  const c=document.getElementById("mlist");
+  if(!selectedMatchDate)selectedMatchDate=getDefaultMatchDate();
+  const dayMatches=matches.filter(m=>m.date===selectedMatchDate);
+  c.innerHTML=renderDaySelector();
+  if(!dayMatches.length){c.innerHTML+=`<div style="text-align:center;padding:48px 24px;color:var(--tx3)">Aucun match ce jour</div>`;return;}
+  let cur=null;
+  dayMatches.forEach(m=>{
+    if(m.phase!==cur){cur=m.phase;const el=document.createElement("div");el.style.marginTop="14px";el.innerHTML=`<span class="gbadge">${m.phase}</span>`;c.appendChild(el);}
     c.appendChild(buildCard(m));
   });
+}
+
+function renderOtherPredictions(key,st){
+  if(st==="open")return "";
+  const rows=Object.entries(pronostics[key]||{})
+    .filter(([ps,pr])=>pr&&pr.locked&&pr.home!==""&&pr.away!=="")
+    .sort((a,b)=>a[0].localeCompare(b[0],'fr'))
+    .map(([ps,pr])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--br)"><span style="font-size:12px;color:${ps===currentUser?'var(--gl)':'var(--tx2)'}">${esc(ps)}${ps===currentUser?' · toi':''}</span><strong style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--tx)">${pr.home} – ${pr.away}</strong></div>`);
+  if(!rows.length)return `<div style="padding:8px 12px;border-top:1px solid var(--br);font-size:12px;color:var(--tx3)">👀 Aucun prono validé à afficher.</div>`;
+  return `<div style="padding:10px 12px;border-top:1px solid var(--br);background:rgba(255,255,255,.025)"><div style="font-size:11px;color:var(--gold);font-weight:600;margin-bottom:4px">👀 Pronos des joueurs</div>${rows.join('')}</div>`;
 }
 
 function buildCard(m){
@@ -834,7 +892,8 @@ function buildCard(m){
       ${sh}
       <div class="team"><span class="tf">${flag(m.team2)}</span><span class="tn">${m.team2}</span></div>
     </div>
-    <div class="mf">${fl}${pb}</div>`;
+    <div class="mf">${fl}${pb}</div>
+    ${renderOtherPredictions(key,st)}`;
   return div;
 }
 
