@@ -98,7 +98,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 </head>
 <body>
 <div class="toast" id="toast"></div>
-
+ 
 <div id="screenLogin">
   <div class="ls">
     <div class="ball">⚽</div>
@@ -111,7 +111,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     </div>
   </div>
 </div>
-
+ 
 <div id="screenPin" class="hidden">
   <div class="pin-screen">
     <div style="font-size:48px;margin-bottom:12px" id="pinEmoji">🔑</div>
@@ -131,7 +131,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     <button class="btn btno btns" style="margin-top:20px;width:auto" onclick="backToLogin()">← Retour</button>
   </div>
 </div>
-
+ 
 <div class="ov hidden" id="alModal">
   <div class="mod">
     <div class="mt">🔐 Accès admin</div>
@@ -143,7 +143,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     </div>
   </div>
 </div>
-
+ 
 <div id="app" class="hidden">
   <div class="hdr">
     <div class="logo">⚽ CM 2026<span><span class="dot" id="dot"></span><span id="synclbl">Chargement…</span></span></div>
@@ -178,17 +178,30 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
   <div id="ta" class="main hidden fadein">
     <div class="infob">⚙️ Scores récupérés automatiquement. Tu peux forcer la mise à jour ou corriger manuellement.</div>
     <button class="btn" style="margin-bottom:16px" onclick="fetchScores(true)">🔄 Forcer la mise à jour</button>
+ 
+    <div class="stitle">Joueurs inscrits</div>
+    <div id="playerList" style="margin-bottom:20px"></div>
+ 
+    <div class="stitle">Créer un compte</div>
+    <div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:14px;margin-bottom:20px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input class="inp" id="newPseudo" type="text" placeholder="Pseudo" maxlength="20" autocomplete="off">
+        <input class="inp" id="newPin" type="number" placeholder="PIN à 4 chiffres" maxlength="4" oninput="this.value=this.value.slice(0,4)">
+        <button class="btn" onclick="createPlayer()">➕ Créer le compte</button>
+      </div>
+    </div>
+ 
     <div class="stitle">Corriger un score</div>
     <div id="alist"></div>
   </div>
 </div>
-
+ 
 <script>
 const ADMIN_CODE="cm2026admin";
 const API_URL="https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
 const CACHE_MS=10*60*1000;
 const SESSION_KEY="wc2026_session";
-
+ 
 // ============================================================
 // DONNÉES OFFICIELLES — horaires en heure de Paris (CEST = UTC+2)
 // ============================================================
@@ -284,7 +297,7 @@ const MATCHES_DATA = [
   ["Angleterre","Panama","2026-06-27","21:00","Groupe L"],
   ["Croatie","Ghana","2026-06-27","21:00","Groupe L"],
 ];
-
+ 
 // Phases finales
 const KO_DATA = [
   // Huitièmes
@@ -294,7 +307,7 @@ const KO_DATA = [
   {phase:"3e place", n:1, dates:["2026-07-15"], times:["21:00"]},
   {phase:"Finale", n:1, dates:["2026-07-19"], times:["21:00"]},
 ];
-
+ 
 const FLAGS={
   "Mexique":"🇲🇽","Afrique du Sud":"🇿🇦","Corée du Sud":"🇰🇷","Tchéquie":"🇨🇿",
   "Canada":"🇨🇦","Bosnie-Herzégovine":"🇧🇦","Qatar":"🇶🇦","Suisse":"🇨🇭",
@@ -310,7 +323,7 @@ const FLAGS={
   "Angleterre":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croatie":"🇭🇷","Ghana":"🇬🇭","Panama":"🇵🇦",
 };
 function flag(n){return FLAGS[n]||"🏳";}
-
+ 
 function buildMatches(){
   const ms=[];
   MATCHES_DATA.forEach(([t1,t2,date,time,grp],i)=>{
@@ -324,24 +337,24 @@ function buildMatches(){
   });
   return ms;
 }
-
+ 
 let matches=buildMatches();
 let pronostics={},players={},pinStore={};
 let currentUser=null,isAdmin=false,lastFetch=0;
 let pinPseudo="",pinBuffer="",pinMode="";
-
+ 
 function mkey(m){return m.id+"";}
-
+ 
 function hashPin(pseudo,pin){
   const str=pseudo.toLowerCase()+":"+pin;let h=0;
   for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h|=0;}
   return h.toString(36);
 }
-
+ 
 function saveSession(p){try{localStorage.setItem(SESSION_KEY,p);}catch(e){}}
 function loadSession(){try{return localStorage.getItem(SESSION_KEY);}catch(e){return null;}}
 function clearSession(){try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
-
+ 
 async function loadSt(){
   try{
     const r=await window.storage.get("wc2026_v5",true);
@@ -356,7 +369,7 @@ async function saveSt(){
   const sc=matches.filter(m=>m.score).map(m=>({k:mkey(m),ft:m.score.ft,m:m.score._m||false}));
   try{await window.storage.set("wc2026_v5",JSON.stringify({pronostics,players,pinStore,scores:sc}),true);}catch(e){}
 }
-
+ 
 async function fetchScores(force=false){
   if(!force&&Date.now()-lastFetch<CACHE_MS)return;
   setSync("spin","Mise à jour…");
@@ -380,7 +393,7 @@ function refresh(){
   if(!document.getElementById("tp").classList.contains("hidden"))renderMatches();
   if(!document.getElementById("tc").classList.contains("hidden"))renderLB();
 }
-
+ 
 // AUTH
 function submitPseudo(){
   const p=document.getElementById("pseudo").value.trim();
@@ -440,7 +453,7 @@ function adminLogin(){
   if(document.getElementById("alCode").value!==ADMIN_CODE){toast("❌ Code incorrect");return;}
   closeAL();currentUser="Admin";isAdmin=true;enterApp();
 }
-
+ 
 function showTab(t){
   ["p","c","r","a"].forEach(x=>document.getElementById("t"+x).classList.add("hidden"));
   document.querySelectorAll(".nt").forEach(el=>el.classList.remove("on"));
@@ -448,7 +461,7 @@ function showTab(t){
   const idx=["p","c","r","a"].indexOf(t);document.querySelectorAll(".nt")[idx]?.classList.add("on");
   if(t==="p")renderMatches();if(t==="c")renderLB();if(t==="a")renderAdmin();
 }
-
+ 
 // Status — les horaires sont déjà en heure de Paris (CEST = UTC+2)
 function getStatus(m){
   if(m.score?.ft)return"done";
@@ -461,7 +474,7 @@ function getStatus(m){
   return now>=new Date(koUTC.getTime()+60000)?"locked":"open";
 }
 function pad(n){return n.toString().padStart(2,"0");}
-
+ 
 function pts(ph,pa,rh,ra){
   if([ph,pa,rh,ra].some(x=>x===null||x===undefined||x===""))return null;
   [ph,pa,rh,ra]=[ph,pa,rh,ra].map(Number);
@@ -479,12 +492,12 @@ function recalc(){
   });
   Object.keys(players).forEach(ps=>{players[ps].totalPts=p[ps]||0;});
 }
-
+ 
 function isNightMatch(time){
   const h=parseInt((time||"21:00").split(":")[0]);
   return h>=0&&h<8;
 }
-
+ 
 function renderMatches(){
   const c=document.getElementById("mlist");c.innerHTML="";let cur=null;
   matches.forEach(m=>{
@@ -492,7 +505,7 @@ function renderMatches(){
     c.appendChild(buildCard(m));
   });
 }
-
+ 
 function buildCard(m){
   const st=getStatus(m),key=mkey(m);
   const up=pronostics[key]?.[currentUser]||{home:"",away:""};
@@ -501,7 +514,7 @@ function buildCard(m){
   const slbl={open:"Ouvert",locked:"Fermé",done:"Terminé"}[st];
   const scls={open:"sopen",locked:"slocked",done:"sdone"}[st];
   const nuit=isNightMatch(m.time)?`<span class="nuit">🌙 nuit</span>`:"";
-
+ 
   let sh="";
   if(st==="open"&&!isAdmin){
     sh=`<div style="display:flex;align-items:center;gap:6px">
@@ -518,7 +531,7 @@ function buildCard(m){
   else{fl=`<span style="font-size:11px;color:var(--tx3)">${fdate(m.date)}</span>`;}
   let pb="";
   if(pv!==null){const cls=pv===8?"p8":pv===5?"p5":pv===3?"p3":"p0";pb=`<span class="pb ${cls}">+${pv} pts</span>`;}
-
+ 
   const div=document.createElement("div");div.className="mc";
   div.innerHTML=`<div class="mh"><span class="mdate">${fdate(m.date)} · ${m.time}${nuit}</span><span class="ms ${scls}">${slbl}</span></div>
     <div class="mb">
@@ -529,7 +542,7 @@ function buildCard(m){
     <div class="mf">${fl}${pb}</div>`;
   return div;
 }
-
+ 
 async function saveP(key,side,val){
   const m=matches.find(x=>mkey(x)===key);
   if(!m||getStatus(m)!=="open"){toast("⏰ Pronostics fermés !");return;}
@@ -537,7 +550,7 @@ async function saveP(key,side,val){
   if(!pronostics[key][currentUser])pronostics[key][currentUser]={home:"",away:""};
   pronostics[key][currentUser][side]=val;await saveSt();
 }
-
+ 
 function renderLB(){
   recalc();const c=document.getElementById("lb");c.innerHTML="";
   const list=Object.entries(players).filter(([p])=>p!=="Admin").sort((a,b)=>b[1].totalPts-a[1].totalPts);
@@ -553,8 +566,69 @@ function renderLB(){
     c.appendChild(row);
   });
 }
-
+ 
+function renderPlayerList(){
+  const c=document.getElementById("playerList");c.innerHTML="";
+  const list=Object.keys(players).filter(p=>p!=="Admin");
+  if(!list.length){
+    c.innerHTML=`<div style="text-align:center;padding:24px;color:var(--tx3);font-size:13px">Aucun joueur inscrit</div>`;
+    return;
+  }
+  list.forEach(ps=>{
+    const data=players[ps];
+    const nb=Object.values(pronostics).filter(p=>p[ps]&&(p[ps].home!==""||p[ps].away!=="")).length;
+    const div=document.createElement("div");
+    div.style.cssText="background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px";
+    div.innerHTML=`
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--gd);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;color:#fff;flex-shrink:0">${ps[0].toUpperCase()}</div>
+      <div style="flex:1">
+        <div style="font-weight:500;font-size:14px">${ps}</div>
+        <div style="font-size:12px;color:var(--tx2)">${data.totalPts} pts · ${nb} pronostic${nb>1?"s":""}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="resetPin('${ps}')" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.3);color:var(--gold);font-size:11px;padding:5px 10px;border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif">🔑 Reset PIN</button>
+        <button onclick="deletePlayer('${ps}')" style="background:rgba(224,49,49,.1);border:1px solid rgba(224,49,49,.3);color:#e06060;font-size:11px;padding:5px 10px;border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif">🗑 Suppr.</button>
+      </div>`;
+    c.appendChild(div);
+  });
+}
+ 
+async function createPlayer(){
+  const pseudo=document.getElementById("newPseudo").value.trim();
+  const pin=document.getElementById("newPin").value.trim();
+  if(!pseudo||pseudo.length<2){toast("❌ Pseudo trop court");return;}
+  if(pin.length!==4||isNaN(pin)){toast("❌ PIN doit être 4 chiffres");return;}
+  if(players[pseudo]){toast("❌ Ce pseudo existe déjà");return;}
+  players[pseudo]={totalPts:0};
+  pinStore[pseudo.toLowerCase()]=hashPin(pseudo,pin);
+  await saveSt();
+  document.getElementById("newPseudo").value="";
+  document.getElementById("newPin").value="";
+  toast("✅ Compte créé : "+pseudo);
+  renderPlayerList();
+}
+ 
+async function resetPin(pseudo){
+  const newPin=prompt("Nouveau PIN à 4 chiffres pour "+pseudo+" :");
+  if(!newPin||newPin.length!==4||isNaN(newPin)){toast("❌ PIN invalide");return;}
+  pinStore[pseudo.toLowerCase()]=hashPin(pseudo,newPin);
+  await saveSt();
+  toast("✅ PIN réinitialisé pour "+pseudo);
+}
+ 
+async function deletePlayer(pseudo){
+  if(!confirm("Supprimer le compte de "+pseudo+" ? Ses pronostics seront aussi supprimés.")){return;}
+  delete players[pseudo];
+  delete pinStore[pseudo.toLowerCase()];
+  // Supprimer ses pronostics
+  Object.keys(pronostics).forEach(k=>{delete pronostics[k][pseudo];});
+  recalc();await saveSt();
+  toast("🗑 Compte supprimé : "+pseudo);
+  renderPlayerList();renderLB();
+}
+ 
 function renderAdmin(){
+  renderPlayerList();
   const c=document.getElementById("alist");c.innerHTML="";
   matches.forEach(m=>{
     const key=mkey(m),[rh,ra]=m.score?.ft||["",""];
@@ -577,11 +651,11 @@ async function setM(key,idx,val){
   m.score.ft[idx]=val===""?null:parseInt(val);m.score._m=true;
   if(m.score.ft[0]!==null&&m.score.ft[1]!==null){recalc();await saveSt();toast("✅ Score sauvegardé");}
 }
-
+ 
 function fdate(d){if(!d)return"";const[,mo,dy]=d.split("-");return parseInt(dy)+" "+["","jan","fév","mar","avr","mai","juin","juil","août","sep","oct","nov","déc"][parseInt(mo)];}
 function hhmm(d){return d.getHours().toString().padStart(2,"0")+":"+d.getMinutes().toString().padStart(2,"0");}
 function toast(msg){const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2500);}
-
+ 
 async function init(){
   setSync("spin","Chargement…");
   await loadSt();recalc();
