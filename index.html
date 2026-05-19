@@ -378,7 +378,7 @@ async function loadSt(){
     pronostics={};
     (pronosticsData||[]).forEach(pr=>{
       if(!pronostics[pr.match_id]) pronostics[pr.match_id]={};
-      pronostics[pr.match_id][pr.pseudo]={home:pr.home??"",away:pr.away??""};
+      pronostics[pr.match_id][pr.pseudo]={home:pr.home??"",away:pr.away??"",locked:!!pr.locked};
     });
 
     const { data: scoresData, error: scoresError } = await db.from("wc_scores").select("*");
@@ -419,6 +419,7 @@ async function saveSt(){
             pseudo,
             home:pr.home===""?null:Number(pr.home),
             away:pr.away===""?null:Number(pr.away),
+            locked:!!pr.locked,
             updated_at:new Date().toISOString()
           });
         }
@@ -601,11 +602,14 @@ function buildCard(m){
   const nuit=isNightMatch(m.time)?`<span class="nuit">🌙 nuit</span>`:"";
 
   let sh="";
-  if(st==="open"&&!isAdmin){
-    sh=`<div style="display:flex;align-items:center;gap:6px">
-      <input class="sinp" type="number" min="0" max="20" value="${up.home}" placeholder="0" onchange="saveP('${key}','home',this.value)" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,2)">
-      <span class="ssep">–</span>
-      <input class="sinp" type="number" min="0" max="20" value="${up.away}" placeholder="0" onchange="saveP('${key}','away',this.value)" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,2)">
+  if(st==="open"&&!isAdmin&&!up.locked){
+    sh=`<div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <input id="ph_${key}" class="sinp" type="number" min="0" max="20" value="${up.home}" placeholder="0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,2);saveP('${key}','home',this.value)">
+        <span class="ssep">–</span>
+        <input id="pa_${key}" class="sinp" type="number" min="0" max="20" value="${up.away}" placeholder="0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,2);saveP('${key}','away',this.value)">
+      </div>
+      <button class="btn btns btng" style="padding:6px 12px;font-size:12px" onclick="validatePronostic('${key}')">🔒 Valider</button>
     </div>`;
   }else{
     sh=`<div class="sdisp"><div class="sbox">${up.home!==""?up.home:"–"}</div><span class="ssep">–</span><div class="sbox">${up.away!==""?up.away:"–"}</div></div>`;
@@ -614,6 +618,7 @@ function buildCard(m){
   if(rh!==null){fl=`<span style="font-size:12px;color:var(--tx3)">Résultat : <strong style="color:var(--gl)">${rh}–${ra}</strong> <span class="autob">${m.score._m?"✏️ manuel":"🤖 auto"}</span></span>`;}
   else if(st!=="open"){fl=`<span style="font-size:11px;color:var(--tx3)">En attente du résultat…</span>`;}
   else{fl=`<span style="font-size:11px;color:var(--tx3)">${fdate(m.date)}</span>`;}
+  if(up.locked&&st!=="done"){fl+=`<span class="autob">🔒 validé</span>`;}
   let pb="";
   if(pv!==null){const cls=pv===8?"p8":pv===5?"p5":pv===3?"p3":"p0";pb=`<span class="pb ${cls}">+${pv} pts</span>`;}
 
@@ -628,27 +633,42 @@ function buildCard(m){
   return div;
 }
 
-async function saveP(key,side,val){
+function saveP(key,side,val){
   const m=matches.find(x=>mkey(x)===key);
   if(!m||getStatus(m)!=="open"){toast("⏰ Pronostics fermés !");return;}
   if(!pronostics[key])pronostics[key]={};
-  if(!pronostics[key][currentUser])pronostics[key][currentUser]={home:"",away:""};
+  if(!pronostics[key][currentUser])pronostics[key][currentUser]={home:"",away:"",locked:false};
   pronostics[key][currentUser][side]=val;
+}
 
-  const pr=pronostics[key][currentUser];
+async function validatePronostic(key){
+  const m=matches.find(x=>mkey(x)===key);
+  if(!m||getStatus(m)!=="open"){toast("⏰ Pronostics fermés !");return;}
+  if(!currentUser||isAdmin){toast("❌ Connecte-toi avec un compte joueur");return;}
+
+  const home=document.getElementById("ph_"+key)?.value ?? "";
+  const away=document.getElementById("pa_"+key)?.value ?? "";
+  if(home===""||away===""){toast("⚠️ Entre les deux scores avant de valider");return;}
+
+  if(!pronostics[key])pronostics[key]={};
+  pronostics[key][currentUser]={home,away,locked:true};
+
   try{
     const { error } = await db.from("wc_pronostics").upsert({
       match_id:key,
       pseudo:currentUser,
-      home:pr.home===""?null:Number(pr.home),
-      away:pr.away===""?null:Number(pr.away),
+      home:Number(home),
+      away:Number(away),
+      locked:true,
       updated_at:new Date().toISOString()
     },{onConflict:"match_id,pseudo"});
     if(error) throw error;
-    toast("✅ Pronostic sauvegardé");
+    toast("✅ Pronostic validé dans Supabase");
+    renderMatches();
   }catch(e){
-    console.error("Erreur sauvegarde pronostic:",e);
-    toast("❌ Pronostic non sauvegardé");
+    console.error("Erreur validation pronostic:",e);
+    pronostics[key][currentUser].locked=false;
+    toast("❌ Pronostic non enregistré dans Supabase");
   }
 }
 
