@@ -598,12 +598,16 @@ function showTab(t){
 }
 
 
+function getParisKickoffUTC(m){
+  const [year,month,day]=(m.date||"2026-06-11").split("-").map(Number);
+  const [hour,minute]=(m.time||"21:00").split(":").map(Number);
+  // Les horaires de l'appli sont saisis en heure de Paris.
+  // Pendant la Coupe du Monde 2026, Paris est en CEST = UTC+2.
+  // On construit donc une date UTC explicite, indépendante du fuseau horaire du téléphone.
+  return new Date(Date.UTC(year,month-1,day,hour-2,minute,0));
+}
 function competitionStartDate(){
-  const first=matches[0];
-  const [hh,mm]=(first.time||"21:00").split(":").map(Number);
-  const d=new Date(first.date+"T"+pad(hh)+":"+pad(mm)+":00");
-  d.setHours(d.getHours()-2);
-  return d;
+  return getParisKickoffUTC(matches[0]);
 }
 function finalPredictionsOpen(){
   return new Date() < new Date(competitionStartDate().getTime()+60000);
@@ -745,15 +749,11 @@ function renderFinalPrediction(){
   c.innerHTML=html;
 }
 
-// Status — les horaires sont déjà en heure de Paris (CEST = UTC+2)
+// Status — verrouillage sur une date UTC explicite, donc identique France / Mexico / Denver
 function getStatus(m){
   if(m.score?.ft)return"done";
   const now=new Date();
-  // Convertir heure Paris → UTC pour comparaison
-  const [hh,mm]=(m.time||"21:00").split(":").map(Number);
-  const koUTC=new Date(m.date+"T"+pad(hh)+":"+pad(mm)+":00");
-  // CEST = UTC+2, donc heure Paris - 2h = UTC
-  koUTC.setHours(koUTC.getHours()-2);
+  const koUTC=getParisKickoffUTC(m);
   return now>=new Date(koUTC.getTime()+60000)?"locked":"open";
 }
 function pad(n){return n.toString().padStart(2,"0");}
