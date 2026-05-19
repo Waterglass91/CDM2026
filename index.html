@@ -69,7 +69,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 .sinp:focus{border-color:var(--gl)}.sinp::-webkit-outer-spin-button,.sinp::-webkit-inner-spin-button{-webkit-appearance:none}
 .mf{padding:8px 12px;border-top:1px solid var(--br);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px}
 .pb{font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px}
-.p8{background:rgba(240,180,41,.2);color:var(--gold)}.p5{background:rgba(37,163,85,.15);color:var(--gl)}.p3{background:rgba(255,255,255,.08);color:var(--tx2)}.p0{background:rgba(224,49,49,.1);color:#e06060}
+.p5{background:rgba(240,180,41,.2);color:var(--gold)}.p3{background:rgba(37,163,85,.15);color:var(--gl)}.p2{background:rgba(255,255,255,.08);color:var(--tx2)}.p0{background:rgba(224,49,49,.1);color:#e06060}
 .autob{font-size:10px;padding:1px 7px;border-radius:20px;background:rgba(37,163,85,.1);color:var(--tx3);border:1px solid rgba(37,163,85,.2)}
 .lbr{background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:12px}
 .lbrk{font-family:'Bebas Neue',cursive;font-size:22px;color:var(--tx3);min-width:28px}
@@ -162,10 +162,11 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
   <div id="tr" class="main hidden fadein">
     <div class="stitle">Système de points</div>
     <div class="rc">
-      <div class="rrow"><div class="re">🎯</div><div class="rp">8</div><div class="rd"><strong>Score exact</strong><br>Tu as deviné le score parfait</div></div>
-      <div class="rrow"><div class="re">📏</div><div class="rp">5</div><div class="rd"><strong>Écart correct</strong><br>Bon vainqueur + bon écart de buts</div></div>
-      <div class="rrow"><div class="re">✅</div><div class="rp">3</div><div class="rd"><strong>Bon vainqueur</strong><br>Victoire ou nul correct</div></div>
-      <div class="rrow"><div class="re">❌</div><div class="rp">0</div><div class="rd"><strong>Mauvais pronostic</strong><br>Tant pis !</div></div>
+      <div class="rrow"><div class="re">🎯</div><div class="rp">5</div><div class="rd"><strong>Score exact</strong><br>Tu as deviné le score parfait</div></div>
+      <div class="rrow"><div class="re">📏</div><div class="rp">3</div><div class="rd"><strong>Bon vainqueur + bon écart</strong><br>Tu as le bon résultat et le bon écart de buts</div></div>
+      <div class="rrow"><div class="re">✅</div><div class="rp">2</div><div class="rd"><strong>Bon gagnant</strong><br>Tu as trouvé la bonne équipe qui gagne, ou le nul</div></div>
+      <div class="rrow"><div class="re">❌</div><div class="rp">0</div><div class="rd"><strong>Mauvais gagnant</strong><br>Tu n'as pas trouvé le bon résultat</div></div>
+      <div class="rrow"><div class="re">🔥</div><div class="rp">+3</div><div class="rd"><strong>Bonus précision</strong><br>+3 pts par tranche de 3 scores exacts</div></div>
     </div>
     <div class="stitle">Bonus compétition</div>
     <div class="rc">
@@ -762,10 +763,27 @@ function pad(n){return n.toString().padStart(2,"0");}
 function pts(ph,pa,rh,ra){
   if([ph,pa,rh,ra].some(x=>x===null||x===undefined||x===""))return null;
   [ph,pa,rh,ra]=[ph,pa,rh,ra].map(Number);
-  if(ph===rh&&pa===ra)return 8;
+  if(ph===rh&&pa===ra)return 5;
   const pw=ph>pa?"H":ph<pa?"A":"D",rw=rh>ra?"H":rh<ra?"A":"D";
   if(pw!==rw)return 0;
-  return(ph-pa)===(rh-ra)?5:3;
+  return(ph-pa)===(rh-ra)?3:2;
+}
+function isExactScore(pr,rh,ra){
+  if(!pr)return false;
+  if([pr.home,pr.away,rh,ra].some(x=>x===null||x===undefined||x===""))return false;
+  return Number(pr.home)===Number(rh)&&Number(pr.away)===Number(ra);
+}
+function exactScoreCount(ps){
+  let n=0;
+  matches.forEach(m=>{
+    if(!m.score?.ft)return;
+    const[rh,ra]=m.score.ft;
+    if(isExactScore(pronostics[mkey(m)]?.[ps],rh,ra))n++;
+  });
+  return n;
+}
+function exactScoreBonus(ps){
+  return Math.floor(exactScoreCount(ps)/3)*3;
 }
 function recalc(){
   const p={};
@@ -775,7 +793,7 @@ function recalc(){
     Object.entries(pronostics[mkey(m)]||{}).forEach(([ps,pr])=>{const v=pts(pr.home,pr.away,rh,ra);if(v!==null)p[ps]=(p[ps]||0)+v;});
   });
   Object.keys(players).forEach(ps=>{
-    p[ps]=(p[ps]||0)+finalBonusPoints(finalPredictions[ps],finalResult);
+    p[ps]=(p[ps]||0)+exactScoreBonus(ps)+finalBonusPoints(finalPredictions[ps],finalResult);
     players[ps].totalPts=p[ps]||0;
   });
 }
@@ -883,7 +901,7 @@ function buildCard(m){
   else{fl=`<span style="font-size:11px;color:var(--tx3)">${fdate(m.date)}</span>`;}
   if(up.locked&&st!=="done"){fl+=`<span class="autob">🔒 validé</span>`;}
   let pb="";
-  if(pv!==null){const cls=pv===8?"p8":pv===5?"p5":pv===3?"p3":"p0";pb=`<span class="pb ${cls}">+${pv} pts</span>`;}
+  if(pv!==null){const cls=pv===5?"p5":pv===3?"p3":pv===2?"p2":"p0";pb=`<span class="pb ${cls}">+${pv} pts</span>`;}
 
   const div=document.createElement("div");div.className="mc";
   div.innerHTML=`<div class="mh"><span class="mdate">${fdate(m.date)} · ${m.time}${nuit}</span><span class="ms ${scls}">${slbl}</span></div>
@@ -954,10 +972,12 @@ function renderLB(){
     const rk=i+1,isMe=ps===currentUser;
     const rc=rk===1?"r1":rk===2?"r2":rk===3?"r3":"";
     const nb=Object.values(pronostics).filter(p=>p[ps]&&(p[ps].home!==""||p[ps].away!=="")).length;
-    const bonus=finalBonusPoints(finalPredictions[ps],finalResult);
+    const finalBonus=finalBonusPoints(finalPredictions[ps],finalResult);
+    const precisionBonus=exactScoreBonus(ps);
+    const bonusText=[precisionBonus?`+${precisionBonus} précision`:"",finalBonus?`+${finalBonus} bonus`:""].filter(Boolean).join(" · ");
     const row=document.createElement("div");row.className="lbr"+(isMe?" lbme":"");
     row.innerHTML=`<div class="lbrk ${rc}">${rk}</div><div class="lbav">${ps[0].toUpperCase()}</div>
-      <div class="lbn">${ps}${isMe?' <span style="color:var(--gl);font-size:11px">● toi</span>':''}<span>${nb} pronostic${nb>1?"s":""}${bonus?` · +${bonus} bonus`:''}</span></div>
+      <div class="lbn">${ps}${isMe?' <span style="color:var(--gl);font-size:11px">● toi</span>':''}<span>${nb} pronostic${nb>1?"s":""}${bonusText?` · ${bonusText}`:""}</span></div>
       <div style="text-align:right"><div class="lbp">${data.totalPts}</div><div class="lbpl">points</div></div>`;
     c.appendChild(row);
   });
