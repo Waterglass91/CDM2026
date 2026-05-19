@@ -611,6 +611,11 @@ function buildCard(m){
       </div>
       <button class="btn btns btng" style="padding:6px 12px;font-size:12px" onclick="validatePronostic('${key}')">🔒 Valider</button>
     </div>`;
+  }else if(st==="open"&&!isAdmin&&up.locked){
+    sh=`<div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div class="sdisp"><div class="sbox">${up.home!==""?up.home:"–"}</div><span class="ssep">–</span><div class="sbox">${up.away!==""?up.away:"–"}</div></div>
+      <button class="btn btns btno" style="padding:6px 12px;font-size:12px" onclick="editPronostic('${key}')">✏️ Modifier</button>
+    </div>`;
   }else{
     sh=`<div class="sdisp"><div class="sbox">${up.home!==""?up.home:"–"}</div><span class="ssep">–</span><div class="sbox">${up.away!==""?up.away:"–"}</div></div>`;
   }
@@ -639,6 +644,16 @@ function saveP(key,side,val){
   if(!pronostics[key])pronostics[key]={};
   if(!pronostics[key][currentUser])pronostics[key][currentUser]={home:"",away:"",locked:false};
   pronostics[key][currentUser][side]=val;
+}
+
+function editPronostic(key){
+  const m=matches.find(x=>mkey(x)===key);
+  if(!m||getStatus(m)!=="open"){toast("⏰ Pronostics fermés !");return;}
+  if(!currentUser||isAdmin){toast("❌ Connecte-toi avec un compte joueur");return;}
+  if(!pronostics[key]||!pronostics[key][currentUser])return;
+  pronostics[key][currentUser].locked=false;
+  toast("✏️ Tu peux modifier ton pronostic puis le revalider");
+  renderMatches();
 }
 
 async function validatePronostic(key){
