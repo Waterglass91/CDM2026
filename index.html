@@ -171,12 +171,14 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
       <div class="rrow"><div class="re">🎯</div><div class="rp">5</div><div class="rd"><strong>Score exact</strong><br>Tu as deviné le score parfait</div></div>
       <div class="rrow"><div class="re">📏</div><div class="rp">3</div><div class="rd"><strong>Bon vainqueur + bon écart</strong><br>Tu as le bon résultat et le bon écart de buts</div></div>
       <div class="rrow"><div class="re">✅</div><div class="rp">2</div><div class="rd"><strong>Bon gagnant</strong><br>Tu as trouvé la bonne équipe qui gagne, ou le nul</div></div>
+      <div class="rrow"><div class="re">⏱️</div><div class="rp">+2</div><div class="rd"><strong>Bonus qualification</strong><br>Après les poules, si tu pronostiques un nul, tu dois choisir le qualifié et le mode de victoire : prolongation ou tirs au but.</div></div>
       <div class="rrow"><div class="re">❌</div><div class="rp">0</div><div class="rd"><strong>Mauvais gagnant</strong><br>Tu n'as pas trouvé le bon résultat</div></div>
       <div class="rrow"><div class="re">💥</div><div class="rp">-2</div><div class="rd"><strong>Malus gros écart</strong><br>Mauvais gagnant avec au moins 4 buts d'écart entre ton pronostic et le résultat</div></div>
       <div class="rrow"><div class="re">🔥</div><div class="rp">+3</div><div class="rd"><strong>Bonus précision</strong><br>+3 pts par tranche de 3 scores exacts</div></div>
     </div>
     <div class="stitle">Bonus compétition</div>
     <div class="rc">
+      <div class="rrow"><div class="re">⏰</div><div class="rp">—</div><div class="rd"><strong>Deadlines bonus</strong><br>Top 4 modifiable pendant les poules. Meilleur buteur et meilleur passeur à valider avant le début de la compétition.</div></div>
       <div class="rrow"><div class="re">🏆</div><div class="rp">20</div><div class="rd"><strong>Champion exact</strong><br>Tu as trouvé le vainqueur de la compétition</div></div>
       <div class="rrow"><div class="re">🥈</div><div class="rp">15</div><div class="rd"><strong>Deuxième exact</strong><br>Tu as trouvé le finaliste</div></div>
       <div class="rrow"><div class="re">🥉</div><div class="rp">10</div><div class="rd"><strong>Troisième exact</strong><br>Tu as trouvé l'équipe classée 3e</div></div>
@@ -449,18 +451,28 @@ async function loadSt(){
     pronostics={};
     (pronosticsData||[]).forEach(pr=>{
       if(!pronostics[pr.match_id]) pronostics[pr.match_id]={};
-      pronostics[pr.match_id][pr.pseudo]={home:pr.home??"",away:pr.away??"",locked:!!pr.locked};
+      pronostics[pr.match_id][pr.pseudo]={
+        home:pr.home??"",
+        away:pr.away??"",
+        ko_winner:pr.ko_winner||"",
+        ko_method:pr.ko_method||"",
+        locked:!!pr.locked
+      };
     });
 
     const { data: scoresData, error: scoresError } = await db.from("wc_scores").select("*");
     if(scoresError) throw scoresError;
 
-    // Remettre les scores à zéro avant de recharger ceux de Supabase
     matches.forEach(m=>{m.score=null;});
     (scoresData||[]).forEach(s=>{
       const m=matches.find(x=>mkey(x)===s.match_id);
       if(m && s.home!==null && s.away!==null){
-        m.score={ft:[s.home,s.away],_m:!!s.manual};
+        m.score={
+          ft:[s.home,s.away],
+          ko_winner:s.ko_winner||"",
+          ko_method:s.ko_method||"",
+          _m:!!s.manual
+        };
       }
     });
 
@@ -516,6 +528,8 @@ async function saveSt(){
             pseudo,
             home:pr.home===""?null:Number(pr.home),
             away:pr.away===""?null:Number(pr.away),
+            ko_winner:pr.ko_winner||null,
+            ko_method:pr.ko_method||null,
             locked:!!pr.locked,
             updated_at:new Date().toISOString()
           });
@@ -532,6 +546,8 @@ async function saveSt(){
       match_id:mkey(m),
       home:m.score.ft[0],
       away:m.score.ft[1],
+      ko_winner:m.score.ko_winner||null,
+      ko_method:m.score.ko_method||null,
       manual:!!m.score._m,
       updated_at:new Date().toISOString()
     }));
@@ -662,9 +678,64 @@ function competitionStartDate(){
   const [t1,t2,date,time,grp]=MATCHES_DATA[0];
   return getParisKickoffUTC({date,time});
 }
-function finalPredictionsOpen(){
+
+function firstKnockoutKickoffUTC(){
+  const firstKo=matches.find(m=>m.phase==="Huitièmes de finale");
+  return firstKo?getParisKickoffUTC(firstKo):competitionStartDate();
+}
+function top4PredictionsOpen(){
+  // Top 4 modifiable pendant toute la phase de poules, puis verrouillé au début des phases finales.
+  return new Date() < new Date(firstKnockoutKickoffUTC().getTime()-60000);
+}
+function playerBonusPredictionsOpen(){
+  // Meilleur buteur / meilleur passeur : verrouillés dès le début de la compétition.
   return new Date() < new Date(competitionStartDate().getTime()-60000);
 }
+function finalPredictionsOpen(){
+  return top4PredictionsOpen()||playerBonusPredictionsOpen();
+}
+function isKnockoutMatch(m){
+  return !!m && !m.bonus && !m.grp && m.phase!=="Match bonus · Ligue des Champions";
+}
+function koNeedsWinner(m,home,away){
+  if(!isKnockoutMatch(m))return false;
+  if(home===""||away===""||home===null||away===null||home===undefined||away===undefined)return false;
+  return Number(home)===Number(away);
+}
+function koWinnerOptions(m,selected){
+  if(!m)return '<option value="">Choisir le vainqueur</option>';
+  const teams=[m.team1,m.team2].filter(t=>t&&t!=="À déterminer");
+  return '<option value="">Vainqueur après 90 min</option>'+teams.map(t=>`<option value="${esc(t)}" ${t===selected?'selected':''}>${flag(t)} ${esc(t)}</option>`).join('');
+}
+function koMethodOptions(selected){
+  return `<option value="">Mode de victoire</option>
+    <option value="ET" ${selected==="ET"?'selected':''}>Après prolongation</option>
+    <option value="PEN" ${selected==="PEN"?'selected':''}>Aux tirs au but</option>`;
+}
+function koMethodLabel(v){
+  return v==="PEN"?"t.a.b.":v==="ET"?"prol.":"";
+}
+function formatKoPrediction(pr){
+  if(!pr?.ko_winner)return "";
+  const method=koMethodLabel(pr.ko_method);
+  return `<span style="display:block;font-size:10px;color:var(--gold);margin-top:2px">Qualifié : ${esc(pr.ko_winner)}${method?` · ${method}`:""}</span>`;
+}
+function matchPoints(pr,m){
+  if(!pr||!m?.score?.ft)return null;
+  const base=pts(pr.home,pr.away,m.score.ft[0],m.score.ft[1]);
+  if(base===null)return null;
+  let total=base;
+  // Bonus +2 uniquement sur les matchs à élimination directe qui finissent nuls à la fin du temps réglementaire.
+  if(koNeedsWinner(m,pr.home,pr.away) && koNeedsWinner(m,m.score.ft[0],m.score.ft[1])){
+    if(pr.ko_winner && m.score.ko_winner && pr.ko_winner===m.score.ko_winner){
+      if(!m.score.ko_method || !pr.ko_method || pr.ko_method===m.score.ko_method){
+        total+=2;
+      }
+    }
+  }
+  return total;
+}
+
 function cleanPlayerName(v){
   return (v||"")
     .toLowerCase()
@@ -690,15 +761,17 @@ function totalMatchPointsFor(ps){
   matches.forEach(m=>{
     if(!m.score?.ft)return;
     const pr=pronostics[mkey(m)]?.[ps];
-    if(!pr)return;
-    const v=pts(pr.home,pr.away,m.score.ft[0],m.score.ft[1]);
+    const v=matchPoints(pr,m);
     if(v!==null)total+=v;
   });
   return total;
 }
 function saveFinalChoice(field,val){
   if(!currentUser||isAdmin)return;
-  if(!finalPredictionsOpen()){toast("⏰ Les bonus sont fermés");return;}
+  const top4Fields=["winner","second_place","third_place","fourth_place"];
+  const playerFields=["top_scorer","top_assister"];
+  if(top4Fields.includes(field)&&!top4PredictionsOpen()){toast("⏰ Le Top 4 est fermé");return;}
+  if(playerFields.includes(field)&&!playerBonusPredictionsOpen()){toast("⏰ Buteur/passeur sont fermés");return;}
   if(!finalPredictions[currentUser])finalPredictions[currentUser]={winner:"",second_place:"",third_place:"",fourth_place:"",top_scorer:"",top_assister:"",locked:false};
   finalPredictions[currentUser][field]=val;
 }
@@ -706,25 +779,34 @@ function editFinalPrediction(){
   if(!finalPredictionsOpen()){toast("⏰ Les bonus sont fermés");return;}
   if(!finalPredictions[currentUser])return;
   finalPredictions[currentUser].locked=false;
-  toast("✏️ Tu peux modifier tes bonus puis les revalider");
+  toast("✏️ Tu peux modifier les champs encore ouverts");
   renderFinalPrediction();
 }
 async function validateFinalPrediction(){
   if(!currentUser||isAdmin){toast("❌ Connecte-toi avec un compte joueur");return;}
   if(!finalPredictionsOpen()){toast("⏰ Les bonus sont fermés");return;}
+
+  const current=finalPredictions[currentUser]||{winner:"",second_place:"",third_place:"",fourth_place:"",top_scorer:"",top_assister:"",locked:false};
   const pred={
-    winner:document.getElementById("fp_winner")?.value||"",
-    second_place:document.getElementById("fp_second_place")?.value||"",
-    third_place:document.getElementById("fp_third_place")?.value||"",
-    fourth_place:document.getElementById("fp_fourth_place")?.value||"",
-    top_scorer:cleanPlayerName(document.getElementById("fp_top_scorer")?.value||""),
-    top_assister:cleanPlayerName(document.getElementById("fp_top_assister")?.value||""),
+    winner:top4PredictionsOpen()?(document.getElementById("fp_winner")?.value||""):current.winner,
+    second_place:top4PredictionsOpen()?(document.getElementById("fp_second_place")?.value||""):current.second_place,
+    third_place:top4PredictionsOpen()?(document.getElementById("fp_third_place")?.value||""):current.third_place,
+    fourth_place:top4PredictionsOpen()?(document.getElementById("fp_fourth_place")?.value||""):current.fourth_place,
+    top_scorer:playerBonusPredictionsOpen()?cleanPlayerName(document.getElementById("fp_top_scorer")?.value||""):current.top_scorer,
+    top_assister:playerBonusPredictionsOpen()?cleanPlayerName(document.getElementById("fp_top_assister")?.value||""):current.top_assister,
     locked:true
   };
+
   const vals=[pred.winner,pred.second_place,pred.third_place,pred.fourth_place];
-  if(vals.some(v=>!v)){toast("⚠️ Choisis les 4 équipes avant de valider");return;}
-  if(new Set(vals).size!==4){toast("⚠️ Tu dois choisir 4 équipes différentes");return;}
-  if(!pred.top_scorer||!pred.top_assister){toast("⚠️ Renseigne aussi le meilleur buteur et le meilleur passeur");return;}
+  if(top4PredictionsOpen()){
+    if(vals.some(v=>!v)){toast("⚠️ Choisis les 4 équipes du Top 4");return;}
+    if(new Set(vals).size!==4){toast("⚠️ Tu dois choisir 4 équipes différentes");return;}
+  }
+  if(playerBonusPredictionsOpen()&&(!pred.top_scorer||!pred.top_assister)){
+    toast("⚠️ Renseigne aussi le meilleur buteur et le meilleur passeur");
+    return;
+  }
+
   try{
     const { error } = await db.from("wc_final_predictions").upsert({
       pseudo:currentUser,
@@ -739,7 +821,7 @@ async function validateFinalPrediction(){
     },{onConflict:"pseudo"});
     if(error) throw error;
     finalPredictions[currentUser]=pred;
-    toast("✅ Bonus validés dans Supabase");
+    toast("✅ Bonus enregistrés dans Supabase");
     renderFinalPrediction();
   }catch(e){
     console.error("Erreur validation bonus:",e);
@@ -755,8 +837,11 @@ function finalPlayerLine(label,value,pts){
 function renderFinalPrediction(){
   const c=document.getElementById("finalPredBox");
   if(!c)return;
-  const open=finalPredictionsOpen();
-  const deadline=fdate(matches[0].date)+" à "+matches[0].time;
+  const top4Open=top4PredictionsOpen();
+  const playerOpen=playerBonusPredictionsOpen();
+  const firstKo=matches.find(m=>m.phase==="Huitièmes de finale");
+  const top4Deadline=firstKo?fdate(firstKo.date)+" à "+firstKo.time:fdate(matches[0].date)+" à "+matches[0].time;
+  const playerDeadline=fdate(matches[0].date)+" à "+matches[0].time;
   if(isAdmin){
     c.innerHTML=`<div class="stitle">Bonus compétition</div><div class="infob">Connecte-toi avec un compte joueur pour saisir les bonus. Le résultat réel se renseigne dans l'onglet Admin.</div>`;
     return;
@@ -764,18 +849,24 @@ function renderFinalPrediction(){
   const pred=finalPredictions[currentUser]||{winner:"",second_place:"",third_place:"",fourth_place:"",top_scorer:"",top_assister:"",locked:false};
   const bonus=finalBonusPoints(pred,finalResult);
   let html=`<div class="stitle">Bonus compétition</div>
-    <div class="infob">Choisis ton Top 4, le meilleur buteur et le meilleur passeur. Pour les joueurs : écris uniquement le nom en <strong style="color:var(--gold)">minuscule, sans accent et sans faute</strong>. Exemple : <strong style="color:var(--gold)">mbappe</strong>. Deadline : <strong style="color:var(--gold)">${deadline}</strong>.</div>`;
-  if(open&&!pred.locked){
-    html+=`<div class="rc">
-      <div style="font-size:13px;color:var(--tx2);line-height:1.5;margin-bottom:12px">Après validation, tu pourras encore cliquer sur Modifier tant que la compétition n'a pas commencé.</div>
-      <label style="font-size:12px;color:var(--tx2)">🏆 Champion</label><select class="inp" id="fp_winner" onchange="saveFinalChoice('winner',this.value)" style="margin:6px 0 10px">${optionHtml(pred.winner)}</select>
-      <label style="font-size:12px;color:var(--tx2)">🥈 Deuxième</label><select class="inp" id="fp_second_place" onchange="saveFinalChoice('second_place',this.value)" style="margin:6px 0 10px">${optionHtml(pred.second_place)}</select>
-      <label style="font-size:12px;color:var(--tx2)">🥉 Troisième</label><select class="inp" id="fp_third_place" onchange="saveFinalChoice('third_place',this.value)" style="margin:6px 0 10px">${optionHtml(pred.third_place)}</select>
-      <label style="font-size:12px;color:var(--tx2)">🎖️ Quatrième</label><select class="inp" id="fp_fourth_place" onchange="saveFinalChoice('fourth_place',this.value)" style="margin:6px 0 10px">${optionHtml(pred.fourth_place)}</select>
-      <label style="font-size:12px;color:var(--tx2)">⚽ Meilleur buteur</label><input class="inp" id="fp_top_scorer" value="${esc(pred.top_scorer)}" placeholder="ex : mbappe" oninput="this.value=cleanPlayerName(this.value);saveFinalChoice('top_scorer',this.value)" style="margin:6px 0 10px">
-      <label style="font-size:12px;color:var(--tx2)">🎁 Meilleur passeur</label><input class="inp" id="fp_top_assister" value="${esc(pred.top_assister)}" placeholder="ex : de bruyne" oninput="this.value=cleanPlayerName(this.value);saveFinalChoice('top_assister',this.value)" style="margin:6px 0 14px">
-      <button class="btn btng" onclick="validateFinalPrediction()">🔒 Valider mes bonus</button>
+    <div class="infob">
+      🏆 <strong style="color:var(--tx)">Top 4</strong> modifiable pendant toute la phase de poules, jusqu'au début des phases finales : <strong style="color:var(--gold)">${top4Deadline}</strong>.<br>
+      ⚽ <strong style="color:var(--tx)">Meilleur buteur / passeur</strong> à saisir avant le début de la compétition : <strong style="color:var(--gold)">${playerDeadline}</strong>.
     </div>`;
+
+  if(top4Open||playerOpen){
+    html+=`<div class="rc">
+      <label style="font-size:12px;color:var(--tx2)">🏆 Champion</label><select class="inp" id="fp_winner" ${top4Open?'':'disabled'} onchange="saveFinalChoice('winner',this.value)" style="margin:6px 0 10px">${optionHtml(pred.winner)}</select>
+      <label style="font-size:12px;color:var(--tx2)">🥈 Deuxième</label><select class="inp" id="fp_second_place" ${top4Open?'':'disabled'} onchange="saveFinalChoice('second_place',this.value)" style="margin:6px 0 10px">${optionHtml(pred.second_place)}</select>
+      <label style="font-size:12px;color:var(--tx2)">🥉 Troisième</label><select class="inp" id="fp_third_place" ${top4Open?'':'disabled'} onchange="saveFinalChoice('third_place',this.value)" style="margin:6px 0 10px">${optionHtml(pred.third_place)}</select>
+      <label style="font-size:12px;color:var(--tx2)">🎖️ Quatrième</label><select class="inp" id="fp_fourth_place" ${top4Open?'':'disabled'} onchange="saveFinalChoice('fourth_place',this.value)" style="margin:6px 0 10px">${optionHtml(pred.fourth_place)}</select>
+
+      <label style="font-size:12px;color:var(--tx2)">⚽ Meilleur buteur ${playerOpen?'':'🔒'}</label><input class="inp" id="fp_top_scorer" value="${esc(pred.top_scorer)}" ${playerOpen?'':'disabled'} placeholder="ex : mbappe" oninput="this.value=cleanPlayerName(this.value);saveFinalChoice('top_scorer',this.value)" style="margin:6px 0 10px">
+      <label style="font-size:12px;color:var(--tx2)">🎁 Meilleur passeur ${playerOpen?'':'🔒'}</label><input class="inp" id="fp_top_assister" value="${esc(pred.top_assister)}" ${playerOpen?'':'disabled'} placeholder="ex : de bruyne" oninput="this.value=cleanPlayerName(this.value);saveFinalChoice('top_assister',this.value)" style="margin:6px 0 14px">
+
+      <button class="btn btng" onclick="validateFinalPrediction()">💾 Enregistrer mes bonus</button>
+    </div>`;
+    if(!playerOpen){html+=`<div class="infob">🔒 Le meilleur buteur et le meilleur passeur ne sont plus modifiables. Tu peux encore modifier le Top 4 tant que la phase de poules n'est pas terminée.</div>`;}
   }else{
     html+=`<div class="rc">
       ${finalLine('Champion',pred.winner,20)}
@@ -784,9 +875,8 @@ function renderFinalPrediction(){
       ${finalLine('Quatrième',pred.fourth_place,10)}
       ${finalPlayerLine('Meilleur buteur',pred.top_scorer,15)}
       ${finalPlayerLine('Meilleur passeur',pred.top_assister,15)}
-    </div>`;
-    if(pred.locked&&open){html+=`<button class="btn btno" onclick="editFinalPrediction()">✏️ Modifier mes bonus</button>`;}
-    if(!open){html+=`<div class="infob" style="margin-top:12px">🔒 Les bonus compétition sont fermés depuis le début de la compétition.</div>`;}
+    </div>
+    <div class="infob" style="margin-top:12px">🔒 Les bonus compétition sont fermés.</div>`;
   }
   if(finalResult){
     html+=`<div class="stitle">Résultat réel</div><div class="rc">
@@ -844,8 +934,10 @@ function recalc(){
   const p={};
   matches.forEach(m=>{
     if(!m.score?.ft)return;
-    const[rh,ra]=m.score.ft;
-    Object.entries(pronostics[mkey(m)]||{}).forEach(([ps,pr])=>{const v=pts(pr.home,pr.away,rh,ra);if(v!==null)p[ps]=(p[ps]||0)+v;});
+    Object.entries(pronostics[mkey(m)]||{}).forEach(([ps,pr])=>{
+      const v=matchPoints(pr,m);
+      if(v!==null)p[ps]=(p[ps]||0)+v;
+    });
   });
   Object.keys(players).forEach(ps=>{
     p[ps]=(p[ps]||0)+exactScoreBonus(ps)+finalBonusPoints(finalPredictions[ps],finalResult);
@@ -926,19 +1018,28 @@ function renderOtherPredictions(key,st){
   const rows=Object.entries(pronostics[key]||{})
     .filter(([ps,pr])=>pr&&pr.locked&&pr.home!==""&&pr.away!=="")
     .sort((a,b)=>a[0].localeCompare(b[0],'fr'))
-    .map(([ps,pr])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--br)"><span style="font-size:12px;color:${ps===currentUser?'var(--gl)':'var(--tx2)'}">${esc(ps)}${ps===currentUser?' · toi':''}</span><strong style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--tx)">${pr.home} – ${pr.away}</strong></div>`);
+    .map(([ps,pr])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--br)"><span style="font-size:12px;color:${ps===currentUser?'var(--gl)':'var(--tx2)'}">${esc(ps)}${ps===currentUser?' · toi':''}</span><strong style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--tx);text-align:right">${pr.home} – ${pr.away}${formatKoPrediction(pr)}</strong></div>`);
   if(!rows.length)return `<div style="padding:8px 12px;border-top:1px solid var(--br);font-size:12px;color:var(--tx3)">👀 Aucun prono validé à afficher.</div>`;
   return `<div style="padding:10px 12px;border-top:1px solid var(--br);background:rgba(255,255,255,.025)"><div style="font-size:11px;color:var(--gold);font-weight:600;margin-bottom:4px">👀 Pronos des joueurs</div>${rows.join('')}</div>`;
 }
 
 function buildCard(m){
   const st=getStatus(m),key=mkey(m);
-  const up=pronostics[key]?.[currentUser]||{home:"",away:""};
+  const up=pronostics[key]?.[currentUser]||{home:"",away:"",ko_winner:"",ko_method:""};
   const[rh,ra]=m.score?.ft||[null,null];
-  const pv=rh!==null?pts(up.home,up.away,rh,ra):null;
+  const pv=rh!==null?matchPoints(up,m):null;
   const slbl={open:"Ouvert",locked:"Fermé",done:"Terminé"}[st];
   const scls={open:"sopen",locked:"slocked",done:"sdone"}[st];
   const nuit=isNightMatch(m.time)?`<span class="nuit">🌙 nuit</span>`:"";
+  const needsKo=koNeedsWinner(m,up.home,up.away);
+
+  let koEdit="";
+  if(needsKo){
+    koEdit=`<div style="width:100%;max-width:220px;display:flex;flex-direction:column;gap:6px">
+      <select id="kw_${key}" class="inp" onchange="saveP('${key}','ko_winner',this.value)" style="padding:8px 10px;font-size:12px">${koWinnerOptions(m,up.ko_winner)}</select>
+      <select id="km_${key}" class="inp" onchange="saveP('${key}','ko_method',this.value)" style="padding:8px 10px;font-size:12px">${koMethodOptions(up.ko_method)}</select>
+    </div>`;
+  }
 
   let sh="";
   if(st==="open"&&!isAdmin&&!up.locked){
@@ -952,23 +1053,28 @@ function buildCard(m){
           ${scoreOptions(up.away)}
         </select>
       </div>
+      ${koEdit}
       <button class="btn btns btng" style="padding:6px 12px;font-size:12px" onclick="validatePronostic('${key}')">🔒 Valider</button>
     </div>`;
   }else if(st==="open"&&!isAdmin&&up.locked){
     sh=`<div style="display:flex;flex-direction:column;align-items:center;gap:8px">
       <div class="sdisp"><div class="sbox">${up.home!==""?up.home:"–"}</div><span class="ssep">–</span><div class="sbox">${up.away!==""?up.away:"–"}</div></div>
+      ${formatKoPrediction(up)}
       <button class="btn btns btno" style="padding:6px 12px;font-size:12px" onclick="editPronostic('${key}')">✏️ Modifier</button>
     </div>`;
   }else{
-    sh=`<div class="sdisp"><div class="sbox">${up.home!==""?up.home:"–"}</div><span class="ssep">–</span><div class="sbox">${up.away!==""?up.away:"–"}</div></div>`;
+    sh=`<div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div class="sdisp"><div class="sbox">${up.home!==""?up.home:"–"}</div><span class="ssep">–</span><div class="sbox">${up.away!==""?up.away:"–"}</div></div>${formatKoPrediction(up)}</div>`;
   }
   let fl="";
-  if(rh!==null){fl=`<span style="font-size:12px;color:var(--tx3)">Résultat : <strong style="color:var(--gl)">${rh}–${ra}</strong> <span class="autob">${m.score._m?"✏️ manuel":"🤖 auto"}</span></span>`;}
+  if(rh!==null){
+    const koReal=m.score.ko_winner?` · qualifié : <strong style="color:var(--gold)">${esc(m.score.ko_winner)}</strong>${m.score.ko_method?` (${koMethodLabel(m.score.ko_method)})`:""}`:"";
+    fl=`<span style="font-size:12px;color:var(--tx3)">Résultat : <strong style="color:var(--gl)">${rh}–${ra}</strong>${koReal} <span class="autob">${m.score._m?"✏️ manuel":"🤖 auto"}</span></span>`;
+  }
   else if(st!=="open"){fl=`<span style="font-size:11px;color:var(--tx3)">En attente du résultat…</span>`;}
   else{fl=`<span style="font-size:11px;color:var(--tx3)">${fdate(m.date)}</span>`;}
   if(up.locked&&st!=="done"){fl+=`<span class="autob">🔒 validé</span>`;}
   let pb="";
-  if(pv!==null){const cls=pv===5?"p5":pv===3?"p3":pv===2?"p2":"p0";const sign=pv>0?"+":"";pb=`<span class="pb ${cls}">${sign}${pv} pts</span>`;}
+  if(pv!==null){const cls=pv===5||pv===7?"p5":pv===3?"p3":pv===2||pv===4?"p2":"p0";const sign=pv>0?"+":"";pb=`<span class="pb ${cls}">${sign}${pv} pts</span>`;}
 
   const div=document.createElement("div");div.className=isClubBonusMatch(m)?"mc club-match":"mc";
   div.innerHTML=`<div class="mh"><span class="mdate">${fdate(m.date)} · ${m.time}${nuit}</span><span class="ms ${scls}">${slbl}</span></div>
@@ -986,8 +1092,17 @@ function saveP(key,side,val){
   const m=matches.find(x=>mkey(x)===key);
   if(!m||getStatus(m)!=="open"){toast("⏰ Pronostics fermés !");return;}
   if(!pronostics[key])pronostics[key]={};
-  if(!pronostics[key][currentUser])pronostics[key][currentUser]={home:"",away:"",locked:false};
+  if(!pronostics[key][currentUser])pronostics[key][currentUser]={home:"",away:"",ko_winner:"",ko_method:"",locked:false};
   pronostics[key][currentUser][side]=val;
+
+  if(side==="home"||side==="away"){
+    const pr=pronostics[key][currentUser];
+    if(!koNeedsWinner(m,pr.home,pr.away)){
+      pr.ko_winner="";
+      pr.ko_method="";
+    }
+    if(isKnockoutMatch(m))renderMatches();
+  }
 }
 
 function editPronostic(key){
@@ -1015,8 +1130,17 @@ async function validatePronostic(key){
     return;
   }
 
+  let ko_winner="";
+  let ko_method="";
+  if(koNeedsWinner(m,h,a)){
+    ko_winner=document.getElementById("kw_"+key)?.value||"";
+    ko_method=document.getElementById("km_"+key)?.value||"";
+    if(!ko_winner){toast("⚠️ Choisis le qualifié après prolongation/tirs au but");return;}
+    if(!ko_method){toast("⚠️ Indique si le qualifié gagne en prolongation ou aux tirs au but");return;}
+  }
+
   if(!pronostics[key])pronostics[key]={};
-  pronostics[key][currentUser]={home:h,away:a,locked:true};
+  pronostics[key][currentUser]={home:h,away:a,ko_winner,ko_method,locked:true};
 
   try{
     const { error } = await db.from("wc_pronostics").upsert({
@@ -1024,6 +1148,8 @@ async function validatePronostic(key){
       pseudo:currentUser,
       home:h,
       away:a,
+      ko_winner:ko_winner||null,
+      ko_method:ko_method||null,
       locked:true,
       updated_at:new Date().toISOString()
     },{onConflict:"match_id,pseudo"});
@@ -1195,9 +1321,6 @@ function renderAdmin(){
   const c=document.getElementById("alist");
   c.innerHTML="";
 
-  // Affichage chronologique, pour que le match bonus PSG / Arsenal du 30 mai
-  // apparaisse bien au bon endroit dans la console admin, et non tout en bas
-  // après toutes les phases finales.
   const adminMatches=[...matches].sort((a,b)=>{
     const da=(a.date||"")+" "+(a.time||"00:00");
     const db=(b.date||"")+" "+(b.time||"00:00");
@@ -1206,6 +1329,7 @@ function renderAdmin(){
 
   adminMatches.forEach(m=>{
     const key=mkey(m),[rh,ra]=m.score?.ft||["",""];
+    const adminNeedsKo=koNeedsWinner(m,rh,ra);
     const div=document.createElement("div");
     div.style.cssText="background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:14px;margin-bottom:10px";
     div.innerHTML=`<div style="font-size:11px;color:var(--tx3);margin-bottom:8px"><span style="background:var(--gd);color:var(--gold);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600">${m.grp||m.phase}</span> · ${fdate(m.date)} ${m.time}${m.score?._m?' <span style="color:var(--gold);font-size:10px">✏️ manuel</span>':''}</div>
@@ -1215,14 +1339,22 @@ function renderAdmin(){
         <span style="color:var(--tx2)">–</span>
         <select class="inp score-select" style="width:58px;text-align:center;padding:8px;font-size:18px;font-family:'Bebas Neue',cursive" onchange="setM('${key}',1,this.value)">${scoreOptions(ra)}</select>
         <span style="flex:1;font-size:13px;display:flex;align-items:center;gap:6px">${teamVisual(m.team2,m)} <span>${esc(m.team2)}</span></span>
-      </div>`;
+      </div>
+      ${adminNeedsKo?`<div style="display:flex;gap:8px;margin-top:10px">
+        <select class="inp" style="padding:9px;font-size:12px" onchange="setMKo('${key}','winner',this.value)">${koWinnerOptions(m,m.score?.ko_winner||"")}</select>
+        <select class="inp" style="padding:9px;font-size:12px" onchange="setMKo('${key}','method',this.value)">${koMethodOptions(m.score?.ko_method||"")}</select>
+      </div>`:""}`;
     c.appendChild(div);
   });
 }
 async function setM(key,idx,val){
   const m=matches.find(x=>mkey(x)===key);if(!m)return;
-  if(!m.score?.ft)m.score={ft:[null,null],_m:true};
+  if(!m.score?.ft)m.score={ft:[null,null],ko_winner:"",ko_method:"",_m:true};
   m.score.ft[idx]=val===""?null:parseInt(val);m.score._m=true;
+  if(!koNeedsWinner(m,m.score.ft[0],m.score.ft[1])){
+    m.score.ko_winner="";
+    m.score.ko_method="";
+  }
   if(m.score.ft[0]!==null&&m.score.ft[1]!==null){
     recalc();
     try{
@@ -1230,16 +1362,45 @@ async function setM(key,idx,val){
         match_id:key,
         home:m.score.ft[0],
         away:m.score.ft[1],
+        ko_winner:m.score.ko_winner||null,
+        ko_method:m.score.ko_method||null,
         manual:true,
         updated_at:new Date().toISOString()
       },{onConflict:"match_id"});
       if(error) throw error;
       await saveSt();
       toast("✅ Score sauvegardé");
+      renderAdmin();
     }catch(e){
       console.error("Erreur sauvegarde score:",e);
       toast("❌ Score non sauvegardé");
     }
+  }else{
+    renderAdmin();
+  }
+}
+async function setMKo(key,field,val){
+  const m=matches.find(x=>mkey(x)===key);if(!m||!m.score?.ft)return;
+  if(field==="winner")m.score.ko_winner=val;
+  if(field==="method")m.score.ko_method=val;
+  m.score._m=true;
+  recalc();
+  try{
+    const { error } = await db.from("wc_scores").upsert({
+      match_id:key,
+      home:m.score.ft[0],
+      away:m.score.ft[1],
+      ko_winner:m.score.ko_winner||null,
+      ko_method:m.score.ko_method||null,
+      manual:true,
+      updated_at:new Date().toISOString()
+    },{onConflict:"match_id"});
+    if(error) throw error;
+    await saveSt();
+    toast("✅ Qualification sauvegardée");
+  }catch(e){
+    console.error("Erreur sauvegarde qualification:",e);
+    toast("❌ Qualification non sauvegardée");
   }
 }
 
