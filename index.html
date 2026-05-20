@@ -166,6 +166,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
       <div class="rrow"><div class="re">📏</div><div class="rp">3</div><div class="rd"><strong>Bon vainqueur + bon écart</strong><br>Tu as le bon résultat et le bon écart de buts</div></div>
       <div class="rrow"><div class="re">✅</div><div class="rp">2</div><div class="rd"><strong>Bon gagnant</strong><br>Tu as trouvé la bonne équipe qui gagne, ou le nul</div></div>
       <div class="rrow"><div class="re">❌</div><div class="rp">0</div><div class="rd"><strong>Mauvais gagnant</strong><br>Tu n'as pas trouvé le bon résultat</div></div>
+      <div class="rrow"><div class="re">💥</div><div class="rp">-2</div><div class="rd"><strong>Malus gros écart</strong><br>Mauvais gagnant avec au moins 4 buts d'écart entre ton pronostic et le résultat</div></div>
       <div class="rrow"><div class="re">🔥</div><div class="rp">+3</div><div class="rd"><strong>Bonus précision</strong><br>+3 pts par tranche de 3 scores exacts</div></div>
     </div>
     <div class="stitle">Bonus compétition</div>
@@ -764,9 +765,13 @@ function pts(ph,pa,rh,ra){
   if([ph,pa,rh,ra].some(x=>x===null||x===undefined||x===""))return null;
   [ph,pa,rh,ra]=[ph,pa,rh,ra].map(Number);
   if(ph===rh&&pa===ra)return 5;
-  const pw=ph>pa?"H":ph<pa?"A":"D",rw=rh>ra?"H":rh<ra?"A":"D";
-  if(pw!==rw)return 0;
-  return(ph-pa)===(rh-ra)?3:2;
+  const predDiff=ph-pa;
+  const realDiff=rh-ra;
+  const pw=predDiff>0?"H":predDiff<0?"A":"D",rw=realDiff>0?"H":realDiff<0?"A":"D";
+  if(pw!==rw){
+    return Math.abs(predDiff-realDiff)>=4 ? -2 : 0;
+  }
+  return predDiff===realDiff?3:2;
 }
 function isExactScore(pr,rh,ra){
   if(!pr)return false;
@@ -901,7 +906,7 @@ function buildCard(m){
   else{fl=`<span style="font-size:11px;color:var(--tx3)">${fdate(m.date)}</span>`;}
   if(up.locked&&st!=="done"){fl+=`<span class="autob">🔒 validé</span>`;}
   let pb="";
-  if(pv!==null){const cls=pv===5?"p5":pv===3?"p3":pv===2?"p2":"p0";pb=`<span class="pb ${cls}">+${pv} pts</span>`;}
+  if(pv!==null){const cls=pv===5?"p5":pv===3?"p3":pv===2?"p2":"p0";const sign=pv>0?"+":"";pb=`<span class="pb ${cls}">${sign}${pv} pts</span>`;}
 
   const div=document.createElement("div");div.className="mc";
   div.innerHTML=`<div class="mh"><span class="mdate">${fdate(m.date)} · ${m.time}${nuit}</span><span class="ms ${scls}">${slbl}</span></div>
