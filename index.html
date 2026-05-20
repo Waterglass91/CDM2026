@@ -180,7 +180,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     </div>
     <div class="rc" style="margin-top:12px">
       <div style="font-size:13px;color:var(--tx2);line-height:1.7">
-        ⏰ <strong style="color:var(--tx)">Deadline :</strong> <strong style="color:var(--gold)">1 minute après le coup d'envoi</strong>.<br>
+        ⏰ <strong style="color:var(--tx)">Deadline :</strong> <strong style="color:var(--gold)">1 minute avant le coup d'envoi</strong>.<br>
         🌙 <strong style="color:var(--tx)">Attention aux horaires :</strong> les matchs sont en <strong style="color:var(--gold)">heure de Paris</strong> — certains se jouent la nuit !<br>
         🤖 <strong style="color:var(--tx)">Scores auto :</strong> Récupérés via OpenFootball. Mise à jour toutes les 10 min.<br>
         🔐 <strong style="color:var(--tx)">Anti-triche :</strong> Chaque joueur a un pseudo + PIN unique.<br>
@@ -226,6 +226,13 @@ const SESSION_KEY="wc2026_session";
 // ============================================================
 // DONNÉES OFFICIELLES — horaires en heure de Paris (CEST = UTC+2)
 // ============================================================
+// Matchs bonus hors Coupe du Monde.
+// Ils comptent dans les pronostics mais NE ferment PAS les bonus compétition (Top 4, buteur, passeur).
+// Format : [team1, team2, date, heure_paris, phase]
+const BONUS_MATCHES = [
+  ["Paris", "Arsenal", "2026-05-30", "18:00", "Match bonus · Ligue des Champions"],
+];
+
 // Format : [team1, team2, date, heure_paris, groupe]
 const MATCHES_DATA = [
   // 11 juin
@@ -338,6 +345,7 @@ const FLAGS={
   "Pays-Bas":"🇳🇱","Japon":"🇯🇵","Suède":"🇸🇪","Tunisie":"🇹🇳",
   "Belgique":"🇧🇪","Égypte":"🇪🇬","Iran":"🇮🇷","Nouvelle-Zélande":"🇳🇿",
   "Espagne":"🇪🇸","Cap-Vert":"🇨🇻","Arabie saoudite":"🇸🇦","Uruguay":"🇺🇾",
+  "Paris":"🇫🇷","Arsenal":"🏴",
   "France":"🇫🇷","Sénégal":"🇸🇳","Irak":"🇮🇶","Norvège":"🇳🇴",
   "Argentine":"🇦🇷","Algérie":"🇩🇿","Autriche":"🇦🇹","Jordanie":"🇯🇴",
   "Portugal":"🇵🇹","RD Congo":"🇨🇩","Ouzbékistan":"🇺🇿","Colombie":"🇨🇴",
@@ -355,17 +363,19 @@ function optionHtml(selected){
 function buildMatches(){
   const ms=[];
   MATCHES_DATA.forEach(([t1,t2,date,time,grp],i)=>{
-    ms.push({id:i,grp,phase:grp,team1:t1,team2:t2,date,time,score:null});
+    ms.push({id:i,grp,phase:grp,team1:t1,team2:t2,date,time,score:null,bonus:false});
   });
   let id=MATCHES_DATA.length;
   KO_DATA.forEach(ph=>{
     for(let i=0;i<ph.n;i++){
-      ms.push({id:id++,grp:null,phase:ph.phase,team1:"À déterminer",team2:"À déterminer",date:ph.dates[i]||ph.dates[0],time:ph.times[i]||ph.times[0],score:null});
+      ms.push({id:id++,grp:null,phase:ph.phase,team1:"À déterminer",team2:"À déterminer",date:ph.dates[i]||ph.dates[0],time:ph.times[i]||ph.times[0],score:null,bonus:false});
     }
+  });
+  BONUS_MATCHES.forEach(([t1,t2,date,time,phase],i)=>{
+    ms.push({id:"bonus_"+(i+1),grp:null,phase,team1:t1,team2:t2,date,time,score:null,bonus:true});
   });
   return ms;
 }
-
 let matches=buildMatches();
 let pronostics={},players={},pinStore={},finalPredictions={},finalResult=null;
 let currentUser=null,isAdmin=false,lastFetch=0;
@@ -610,10 +620,13 @@ function getParisKickoffUTC(m){
   return new Date(Date.UTC(year,month-1,day,hour-2,minute,0));
 }
 function competitionStartDate(){
-  return getParisKickoffUTC(matches[0]);
+  // Date de référence uniquement basée sur le premier match de Coupe du Monde.
+  // Les matchs bonus ajoutés avant cette date ne ferment donc pas les bonus compétition.
+  const [t1,t2,date,time,grp]=MATCHES_DATA[0];
+  return getParisKickoffUTC({date,time});
 }
 function finalPredictionsOpen(){
-  return new Date() < new Date(competitionStartDate().getTime()+60000);
+  return new Date() < new Date(competitionStartDate().getTime()-60000);
 }
 function cleanPlayerName(v){
   return (v||"")
@@ -752,12 +765,12 @@ function renderFinalPrediction(){
   c.innerHTML=html;
 }
 
-// Status — verrouillage sur une date UTC explicite, donc identique France / Mexico / Denver
+// Status — verrouillage 1 minute avant le coup d'envoi sur une date UTC explicite, donc identique France / Mexico / Denver
 function getStatus(m){
   if(m.score?.ft)return"done";
   const now=new Date();
   const koUTC=getParisKickoffUTC(m);
-  return now>=new Date(koUTC.getTime()+60000)?"locked":"open";
+  return now>=new Date(koUTC.getTime()-60000)?"locked":"open";
 }
 function pad(n){return n.toString().padStart(2,"0");}
 
