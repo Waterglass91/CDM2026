@@ -695,7 +695,10 @@ function finalPredictionsOpen(){
   return top4PredictionsOpen()||playerBonusPredictionsOpen();
 }
 function isKnockoutMatch(m){
-  return !!m && !m.bonus && !m.grp && m.phase!=="Match bonus · Ligue des Champions";
+  // Matchs nécessitant un vainqueur en cas de nul :
+  // - phases finales de Coupe du Monde
+  // - match bonus PSG / Arsenal, qui peut aussi aller en prolongation ou aux tirs au but
+  return !!m && !m.grp && (isClubBonusMatch(m) || (!m.bonus && m.phase!=="Match bonus · Ligue des Champions"));
 }
 function koNeedsWinner(m,home,away){
   if(!isKnockoutMatch(m))return false;
