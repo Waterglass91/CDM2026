@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚽ CDM 2026 – Paris entre boomers </title>
+<title>⚽ CDM 2026 – Paris entre amis</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--g:#1a7a3c;--gl:#25a355;--gd:#0f4e25;--gold:#f0b429;--goldd:#c8930a;--red:#e03131;--bg:#0d1f13;--bg2:#152b1c;--bg3:#1e3a26;--sf:#1e3a26;--tx:#f0f4f1;--tx2:#9bbfa6;--tx3:#6a9476;--br:rgba(255,255,255,0.08);--r:12px;--rs:8px}
@@ -71,6 +71,8 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 .ssep{color:var(--tx3);font-size:18px;font-weight:300}
 .sinp{width:44px;height:44px;background:var(--bg3);border:1px solid var(--gd);border-radius:var(--rs);color:var(--tx);font-family:'Bebas Neue',cursive;font-size:26px;text-align:center;outline:none;-moz-appearance:textfield;transition:border .2s}
 .sinp:focus{border-color:var(--gl)}.sinp::-webkit-outer-spin-button,.sinp::-webkit-inner-spin-button{-webkit-appearance:none}
+.score-select{appearance:none;-webkit-appearance:none;-moz-appearance:none;cursor:pointer;padding:0;text-align:center;text-align-last:center;background-image:none}
+.score-select option{background:var(--bg2);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:16px}
 .mf{padding:8px 12px;border-top:1px solid var(--br);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px}
 .pb{font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px}
 .p5{background:rgba(240,180,41,.2);color:var(--gold)}.p3{background:rgba(37,163,85,.15);color:var(--gl)}.p2{background:rgba(255,255,255,.08);color:var(--tx2)}.p0{background:rgba(224,49,49,.1);color:#e06060}
@@ -107,7 +109,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
   <div class="ls">
     <div class="ball">⚽</div>
     <div class="lt">COUPE DU<br>MONDE 2026</div>
-    <div class="lsub">Paris entre boomers · USA / Canada / Mexique</div>
+    <div class="lsub">Paris entre amis · USA / Canada / Mexique</div>
     <div class="lf">
       <input class="inp" id="pseudo" type="text" placeholder="Ton pseudo" maxlength="20" autocomplete="off">
       <button class="btn" onclick="submitPseudo()">Continuer</button>
@@ -150,7 +152,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 
 <div id="app" class="hidden">
   <div class="hdr">
-    <div class="logo">⚽ CDM 2026 - Boomers 2.0 <span><span class="dot" id="dot"></span><span id="synclbl">Chargement…</span></span></div>
+    <div class="logo">⚽ CDM 2026<span><span class="dot" id="dot"></span><span id="synclbl">Chargement…</span></span></div>
     <div class="hu"><div class="av" id="av">?</div><button class="bq" onclick="logout()">Quitter</button></div>
   </div>
   <div class="nav">
@@ -911,6 +913,14 @@ function renderMatches(){
   });
 }
 
+function scoreOptions(selected){
+  let html='<option value="">-</option>';
+  for(let i=0;i<=10;i++){
+    html+=`<option value="${i}" ${String(selected)===String(i)?'selected':''}>${i}</option>`;
+  }
+  return html;
+}
+
 function renderOtherPredictions(key,st){
   if(st==="open")return "";
   const rows=Object.entries(pronostics[key]||{})
@@ -934,9 +944,13 @@ function buildCard(m){
   if(st==="open"&&!isAdmin&&!up.locked){
     sh=`<div style="display:flex;flex-direction:column;align-items:center;gap:8px">
       <div style="display:flex;align-items:center;gap:6px">
-        <input id="ph_${key}" class="sinp" type="number" min="0" max="20" value="${up.home}" placeholder="0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,2);saveP('${key}','home',this.value)">
+        <select id="ph_${key}" class="sinp score-select" onchange="saveP('${key}','home',this.value)">
+          ${scoreOptions(up.home)}
+        </select>
         <span class="ssep">–</span>
-        <input id="pa_${key}" class="sinp" type="number" min="0" max="20" value="${up.away}" placeholder="0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,2);saveP('${key}','away',this.value)">
+        <select id="pa_${key}" class="sinp score-select" onchange="saveP('${key}','away',this.value)">
+          ${scoreOptions(up.away)}
+        </select>
       </div>
       <button class="btn btns btng" style="padding:6px 12px;font-size:12px" onclick="validatePronostic('${key}')">🔒 Valider</button>
     </div>`;
@@ -993,17 +1007,23 @@ async function validatePronostic(key){
 
   const home=document.getElementById("ph_"+key)?.value ?? "";
   const away=document.getElementById("pa_"+key)?.value ?? "";
-  if(home===""||away===""){toast("⚠️ Entre les deux scores avant de valider");return;}
+  if(home===""||away===""){toast("⚠️ Choisis les deux scores avant de valider");return;}
+
+  const h=Number(home),a=Number(away);
+  if(!Number.isInteger(h)||!Number.isInteger(a)||h<0||a<0||h>10||a>10){
+    toast("⚠️ Score invalide");
+    return;
+  }
 
   if(!pronostics[key])pronostics[key]={};
-  pronostics[key][currentUser]={home,away,locked:true};
+  pronostics[key][currentUser]={home:h,away:a,locked:true};
 
   try{
     const { error } = await db.from("wc_pronostics").upsert({
       match_id:key,
       pseudo:currentUser,
-      home:Number(home),
-      away:Number(away),
+      home:h,
+      away:a,
       locked:true,
       updated_at:new Date().toISOString()
     },{onConflict:"match_id,pseudo"});
