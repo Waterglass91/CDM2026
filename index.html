@@ -1549,8 +1549,16 @@ async function resetPin(pseudo){
 async function deletePlayer(pseudo){
   if(!confirm("Supprimer le compte de "+pseudo+" ? Ses pronostics seront aussi supprimés.")){return;}
   try{
-    const { error } = await db.from("wc_players").delete().eq("pseudo",pseudo);
-    if(error) throw error;
+    // Suppression dans les 3 tables en parallèle pour ne laisser aucune donnée orpheline
+    const [r1,r2,r3]=await Promise.all([
+      db.from("wc_players").delete().eq("pseudo",pseudo),
+      db.from("wc_pronostics").delete().eq("pseudo",pseudo),
+      db.from("wc_final_predictions").delete().eq("pseudo",pseudo),
+    ]);
+    if(r1.error) throw r1.error;
+    if(r2.error) throw r2.error;
+    if(r3.error) throw r3.error;
+    // Nettoyage local
     delete players[pseudo];
     delete pinStore[pseudo.toLowerCase()];
     Object.keys(pronostics).forEach(k=>{delete pronostics[k][pseudo];});
