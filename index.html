@@ -13,11 +13,12 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes livepulse{0%,100%{background:rgba(240,60,60,.18);color:#ff7070}50%{background:rgba(240,60,60,.35);color:#ffaaaa}}
 .hdr{background:var(--bg2);border-bottom:1px solid var(--br);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .logo{font-family:'Bebas Neue',cursive;font-size:22px;color:var(--gold);letter-spacing:1px}
 .logo span{color:var(--tx2);font-size:12px;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;margin-top:-2px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--tx3);display:inline-block;flex-shrink:0}
-.dot.ok{background:var(--gl)}.dot.spin{background:var(--gold);animation:pulse 1s infinite}.dot.err{background:var(--red)}
+.dot.ok{background:var(--gl)}.dot.spin{background:var(--gold);animation:pulse 1s infinite}.dot.err{background:var(--red)}.dot.live{background:#ff4444;animation:pulse .6s infinite}
 .hu{display:flex;align-items:center;gap:8px}
 .av{width:34px;height:34px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:#fff;border:2px solid var(--gl)}
 .bq{background:none;border:1px solid var(--br);color:var(--tx2);font-size:12px;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif}
@@ -54,10 +55,12 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 .gbadge{display:inline-block;background:var(--gd);color:var(--gold);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-bottom:10px;letter-spacing:.5px}
 .stitle{font-family:'Bebas Neue',cursive;font-size:20px;color:var(--tx2);letter-spacing:1px;margin-bottom:12px;margin-top:4px}
 .mc{background:var(--sf);border:1px solid var(--br);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.mc.live-card{border-color:rgba(255,80,80,.35);box-shadow:0 0 0 1px rgba(255,80,80,.15)}
 .mh{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--br)}
 .mdate{font-size:11px;color:var(--tx3)}
 .ms{font-size:11px;padding:2px 8px;border-radius:20px}
 .sopen{background:rgba(37,163,85,.15);color:var(--gl)}.slocked{background:rgba(240,180,41,.15);color:var(--gold)}.sdone{background:rgba(255,255,255,.06);color:var(--tx3)}
+.slive{animation:livepulse 1.2s infinite;border-radius:20px;padding:2px 8px;font-size:11px}
 .mb{padding:12px;display:flex;align-items:center;gap:8px}
 .team{flex:1;text-align:center}
 .tf{font-size:26px;display:block;margin-bottom:4px}
@@ -77,6 +80,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 .pb{font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px}
 .p5{background:rgba(240,180,41,.2);color:var(--gold)}.p3{background:rgba(37,163,85,.15);color:var(--gl)}.p2{background:rgba(255,255,255,.08);color:var(--tx2)}.p0{background:rgba(224,49,49,.1);color:#e06060}
 .autob{font-size:10px;padding:1px 7px;border-radius:20px;background:rgba(37,163,85,.1);color:var(--tx3);border:1px solid rgba(37,163,85,.2)}
+.livebadge{font-size:10px;padding:1px 7px;border-radius:20px;background:rgba(255,60,60,.15);color:#ff7070;border:1px solid rgba(255,60,60,.3);animation:livepulse 1.5s infinite}
 .lbr{background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:12px}
 .lbrk{font-family:'Bebas Neue',cursive;font-size:22px;color:var(--tx3);min-width:28px}
 .lbrk.r1{color:var(--gold)}.lbrk.r2{color:#b0bec5}.lbrk.r3{color:#cd7f32}
@@ -178,7 +182,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     </div>
     <div class="stitle">Bonus compétition</div>
     <div class="rc">
-      <div class="rrow"><div class="re">⏰</div><div class="rp">—</div><div class="rd"><strong>Deadlines bonus</strong><br>Top 4 modifiable pendant les poules. Meilleur buteur et meilleur passeur à valider avant le début de la compétition.</div></div>
+      <div class="rrow"><div class="re">⏰</div><div class="rp">—</div><div class="rd"><strong>Deadlines bonus</strong><br>Top 4 modifiable pendant les poules. Meilleur buteur et meilleur passeur à valider avant le <strong>16 juin à 21h</strong>.</div></div>
       <div class="rrow"><div class="re">🏆</div><div class="rp">20</div><div class="rd"><strong>Champion exact</strong><br>Tu as trouvé le vainqueur de la compétition</div></div>
       <div class="rrow"><div class="re">🥈</div><div class="rp">15</div><div class="rd"><strong>Deuxième exact</strong><br>Tu as trouvé le finaliste</div></div>
       <div class="rrow"><div class="re">🥉</div><div class="rp">10</div><div class="rd"><strong>Troisième exact</strong><br>Tu as trouvé l'équipe classée 3e</div></div>
@@ -190,14 +194,14 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
       <div style="font-size:13px;color:var(--tx2);line-height:1.7">
         ⏰ <strong style="color:var(--tx)">Deadline :</strong> <strong style="color:var(--gold)">1 minute avant le coup d'envoi</strong>.<br>
         🌙 <strong style="color:var(--tx)">Attention aux horaires :</strong> les matchs sont en <strong style="color:var(--gold)">heure de Paris</strong> — certains se jouent la nuit !<br>
-        🤖 <strong style="color:var(--tx)">Scores auto :</strong> Récupérés via OpenFootball. Mise à jour toutes les 10 min.<br>
+        ⚡ <strong style="color:var(--tx)">Scores live :</strong> Récupérés via worldcup26.ir. Polling toutes les <strong style="color:var(--gold)">60 secondes</strong> pendant un match en cours, 5 min sinon.<br>
         🔐 <strong style="color:var(--tx)">Anti-triche :</strong> Chaque joueur a un pseudo + PIN unique.<br>
         🌍 <strong style="color:var(--tx)">104 matchs :</strong> Phase de groupes + Phases finales.
       </div>
     </div>
   </div>
   <div id="ta" class="main hidden fadein">
-    <div class="infob">⚙️ Scores récupérés automatiquement. Tu peux forcer la mise à jour ou corriger manuellement.</div>
+    <div class="infob">⚙️ Scores récupérés automatiquement via worldcup26.ir (live) + fallback OpenFootball. Tu peux forcer la mise à jour ou corriger manuellement.</div>
     <button class="btn" style="margin-bottom:16px" onclick="fetchScores(true)">🔄 Forcer la mise à jour</button>
 
     <div class="stitle">Joueurs inscrits</div>
@@ -227,101 +231,89 @@ const SUPABASE_ANON_KEY = "sb_publishable_l5v8RTV9e3C7bIYwtt2tLA_VVssSSJJ";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const ADMIN_CODE="cm2026admin";
-const API_URL="https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
-const CACHE_MS=10*60*1000;
+
+// ─── API SOURCES ─────────────────────────────────────────────────────────────
+// 1. worldcup26.ir  — gratuit, sans clé, scores live mis à jour en temps réel
+// 2. OpenFootball   — fallback si worldcup26.ir est indisponible (mise à jour ~quotidienne)
+const LIVE_API_URL="https://worldcup26.ir/get/games";
+const FALLBACK_API_URL="https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
+
+// ─── POLLING ADAPTATIF ───────────────────────────────────────────────────────
+// 60 s pendant qu'un match est en cours → quasi-temps réel
+// 5 min hors match → économise la bande passante
+const CACHE_LIVE_MS  = 60 * 1000;
+const CACHE_IDLE_MS  = 5  * 60 * 1000;
+
 const SESSION_KEY="wc2026_session";
 
-// ============================================================
-// DONNÉES OFFICIELLES — horaires en heure de Paris (CEST = UTC+2)
-// ============================================================
-// Matchs bonus hors Coupe du Monde.
-// Ils comptent dans les pronostics mais NE ferment PAS les bonus compétition (Top 4, buteur, passeur).
-// Format : [team1, team2, date, heure_paris, phase]
+// ─── DONNÉES OFFICIELLES ─────────────────────────────────────────────────────
 const BONUS_MATCHES = [
   ["Paris", "Arsenal", "2026-05-30", "18:00", "Match bonus · Ligue des Champions"],
 ];
 
-// Format : [team1, team2, date, heure_paris, groupe]
 const MATCHES_DATA = [
-  // 11 juin
   ["Mexique","Afrique du Sud","2026-06-11","21:00","Groupe A"],
-  // 12 juin
   ["Corée du Sud","Tchéquie","2026-06-12","04:00","Groupe A"],
   ["Canada","Bosnie-Herzégovine","2026-06-12","21:00","Groupe B"],
-  // 13 juin
   ["États-Unis","Paraguay","2026-06-13","03:00","Groupe D"],
   ["Qatar","Suisse","2026-06-13","21:00","Groupe B"],
-  // 14 juin
   ["Brésil","Maroc","2026-06-14","00:00","Groupe C"],
   ["Haïti","Écosse","2026-06-14","03:00","Groupe C"],
   ["Australie","Turquie","2026-06-14","06:00","Groupe D"],
   ["Allemagne","Curaçao","2026-06-14","19:00","Groupe E"],
   ["Pays-Bas","Japon","2026-06-14","22:00","Groupe F"],
-  // 15 juin
   ["Côte d'Ivoire","Équateur","2026-06-15","01:00","Groupe E"],
   ["Suède","Tunisie","2026-06-15","04:00","Groupe F"],
   ["Espagne","Cap-Vert","2026-06-15","18:00","Groupe H"],
   ["Belgique","Égypte","2026-06-15","21:00","Groupe G"],
-  // 16 juin
   ["Arabie saoudite","Uruguay","2026-06-16","00:00","Groupe H"],
   ["Iran","Nouvelle-Zélande","2026-06-16","03:00","Groupe G"],
   ["France","Sénégal","2026-06-16","21:00","Groupe I"],
-  // 17 juin
   ["Irak","Norvège","2026-06-17","00:00","Groupe I"],
   ["Argentine","Algérie","2026-06-17","03:00","Groupe J"],
   ["Autriche","Jordanie","2026-06-17","06:00","Groupe J"],
   ["Portugal","RD Congo","2026-06-17","19:00","Groupe K"],
   ["Angleterre","Croatie","2026-06-17","22:00","Groupe L"],
-  // 18 juin
   ["Ghana","Panama","2026-06-18","01:00","Groupe L"],
   ["Ouzbékistan","Colombie","2026-06-18","04:00","Groupe K"],
   ["Tchéquie","Afrique du Sud","2026-06-18","18:00","Groupe A"],
   ["Suisse","Bosnie-Herzégovine","2026-06-18","21:00","Groupe B"],
-  // 19 juin
   ["Canada","Qatar","2026-06-19","00:00","Groupe B"],
   ["Mexique","Corée du Sud","2026-06-19","03:00","Groupe A"],
   ["États-Unis","Australie","2026-06-19","21:00","Groupe D"],
-  // 20 juin
   ["Écosse","Maroc","2026-06-20","00:00","Groupe C"],
   ["Brésil","Haïti","2026-06-20","02:30","Groupe C"],
   ["Turquie","Paraguay","2026-06-20","05:00","Groupe D"],
   ["Pays-Bas","Suède","2026-06-20","19:00","Groupe F"],
   ["Allemagne","Côte d'Ivoire","2026-06-20","22:00","Groupe E"],
-  // 21 juin
   ["Équateur","Curaçao","2026-06-21","02:00","Groupe E"],
   ["Tunisie","Japon","2026-06-21","06:00","Groupe F"],
   ["Espagne","Arabie saoudite","2026-06-21","18:00","Groupe H"],
   ["Belgique","Iran","2026-06-21","21:00","Groupe G"],
-  // 22 juin
   ["Égypte","Nouvelle-Zélande","2026-06-22","00:00","Groupe G"],
   ["Uruguay","Cap-Vert","2026-06-22","03:00","Groupe H"],
   ["France","Irak","2026-06-22","23:00","Groupe I"],
-  // 23 juin
   ["Norvège","Sénégal","2026-06-23","02:00","Groupe I"],
   ["Argentine","Autriche","2026-06-23","03:00","Groupe J"],
   ["Algérie","Jordanie","2026-06-23","03:00","Groupe J"],
   ["Portugal","Ouzbékistan","2026-06-23","19:00","Groupe K"],
   ["Colombie","RD Congo","2026-06-23","22:00","Groupe K"],
-  // 24 juin
   ["Angleterre","Ghana","2026-06-24","01:00","Groupe L"],
   ["Croatie","Panama","2026-06-24","01:00","Groupe L"],
   ["Mexique","Tchéquie","2026-06-24","21:00","Groupe A"],
   ["Afrique du Sud","Corée du Sud","2026-06-24","21:00","Groupe A"],
-  // 25 juin
   ["Canada","Suisse","2026-06-25","00:00","Groupe B"],
   ["Bosnie-Herzégovine","Qatar","2026-06-25","00:00","Groupe B"],
   ["États-Unis","Turquie","2026-06-25","03:00","Groupe D"],
   ["Australie","Paraguay","2026-06-25","03:00","Groupe D"],
   ["Allemagne","Équateur","2026-06-25","18:00","Groupe E"],
   ["Côte d'Ivoire","Curaçao","2026-06-25","18:00","Groupe E"],
-  // 26 juin
   ["Pays-Bas","Tunisie","2026-06-26","00:00","Groupe F"],
   ["Japon","Suède","2026-06-26","00:00","Groupe F"],
   ["Brésil","Écosse","2026-06-26","21:00","Groupe C"],
   ["Maroc","Haïti","2026-06-26","21:00","Groupe C"],
   ["France","Norvège","2026-06-26","21:00","Groupe I"],
   ["Sénégal","Irak","2026-06-26","21:00","Groupe I"],
-  // 27 juin
   ["Espagne","Uruguay","2026-06-27","00:00","Groupe H"],
   ["Cap-Vert","Arabie saoudite","2026-06-27","00:00","Groupe H"],
   ["Belgique","Nouvelle-Zélande","2026-06-27","05:00","Groupe G"],
@@ -334,9 +326,7 @@ const MATCHES_DATA = [
   ["Croatie","Ghana","2026-06-27","21:00","Groupe L"],
 ];
 
-// Phases finales
 const KO_DATA = [
-  // Huitièmes
   {phase:"Huitièmes de finale", n:16, dates:["2026-06-29","2026-06-29","2026-06-30","2026-06-30","2026-07-01","2026-07-01","2026-07-02","2026-07-02","2026-07-01","2026-07-01","2026-07-02","2026-07-02","2026-07-03","2026-07-03","2026-07-04","2026-07-04"], times:["19:00","22:00","19:00","22:00","00:00","19:00","00:00","19:00","22:00","22:00","22:00","22:00","19:00","22:00","19:00","22:00"]},
   {phase:"Quarts de finale", n:8, dates:["2026-07-05","2026-07-05","2026-07-06","2026-07-06","2026-07-07","2026-07-07","2026-07-08","2026-07-08"], times:["19:00","22:00","19:00","22:00","19:00","22:00","19:00","22:00"]},
   {phase:"Demi-finales", n:4, dates:["2026-07-11","2026-07-11","2026-07-12","2026-07-12"], times:["19:00","22:00","19:00","22:00"]},
@@ -377,6 +367,25 @@ const COUNTRY_CODES={
   "Argentine":"ar","Algérie":"dz","Autriche":"at","Jordanie":"jo",
   "Portugal":"pt","RD Congo":"cd","Ouzbékistan":"uz","Colombie":"co",
   "Angleterre":"gb-eng","Croatie":"hr","Ghana":"gh","Panama":"pa",
+};
+
+// Table de correspondance noms anglais → noms français (pour les deux APIs)
+const TEAM_NAMES_EN={
+  "Mexico":"Mexique","South Africa":"Afrique du Sud","South Korea":"Corée du Sud",
+  "Czech Republic":"Tchéquie","Canada":"Canada","Bosnia and Herzegovina":"Bosnie-Herzégovine",
+  "Qatar":"Qatar","Switzerland":"Suisse","Brazil":"Brésil","Morocco":"Maroc",
+  "Haiti":"Haïti","Scotland":"Écosse","USA":"États-Unis","United States":"États-Unis",
+  "Paraguay":"Paraguay","Australia":"Australie","Turkey":"Turquie","Germany":"Allemagne",
+  "Curaçao":"Curaçao","Ivory Coast":"Côte d'Ivoire","Cote d'Ivoire":"Côte d'Ivoire",
+  "Ecuador":"Équateur","Netherlands":"Pays-Bas","Japan":"Japon","Sweden":"Suède",
+  "Tunisia":"Tunisie","Belgium":"Belgique","Egypt":"Égypte","Iran":"Iran",
+  "New Zealand":"Nouvelle-Zélande","Spain":"Espagne","Cape Verde":"Cap-Vert",
+  "Saudi Arabia":"Arabie saoudite","Uruguay":"Uruguay","France":"France",
+  "Senegal":"Sénégal","Iraq":"Irak","Norway":"Norvège","Argentina":"Argentine",
+  "Algeria":"Algérie","Austria":"Autriche","Jordan":"Jordanie","Portugal":"Portugal",
+  "DR Congo":"RD Congo","Democratic Republic of Congo":"RD Congo",
+  "Uzbekistan":"Ouzbékistan","Colombia":"Colombie","England":"Angleterre",
+  "Croatia":"Croatie","Ghana":"Ghana","Panama":"Panama"
 };
 
 function flag(n){return FLAGS[n]||"🏳";}
@@ -562,25 +571,132 @@ async function saveSt(){
   }
 }
 
-async function fetchScores(force=false){
-  if(!force&&Date.now()-lastFetch<CACHE_MS)return;
-  setSync("spin","Mise à jour…");
-  try{
-    const r=await fetch(API_URL+"?t="+Date.now());if(!r.ok)throw 0;
-    const data=await r.json();
-    const nm={"Mexico":"Mexique","South Africa":"Afrique du Sud","South Korea":"Corée du Sud","Czech Republic":"Tchéquie","Canada":"Canada","Bosnia and Herzegovina":"Bosnie-Herzégovine","Qatar":"Qatar","Switzerland":"Suisse","Brazil":"Brésil","Morocco":"Maroc","Haiti":"Haïti","Scotland":"Écosse","USA":"États-Unis","United States":"États-Unis","Paraguay":"Paraguay","Australia":"Australie","Turkey":"Turquie","Germany":"Allemagne","Curaçao":"Curaçao","Ivory Coast":"Côte d'Ivoire","Ecuador":"Équateur","Netherlands":"Pays-Bas","Japan":"Japon","Sweden":"Suède","Tunisia":"Tunisie","Belgium":"Belgique","Egypt":"Égypte","Iran":"Iran","New Zealand":"Nouvelle-Zélande","Spain":"Espagne","Cape Verde":"Cap-Vert","Saudi Arabia":"Arabie saoudite","Uruguay":"Uruguay","France":"France","Senegal":"Sénégal","Iraq":"Irak","Norway":"Norvège","Argentina":"Argentine","Algeria":"Algérie","Austria":"Autriche","Jordan":"Jordanie","Portugal":"Portugal","DR Congo":"RD Congo","Uzbekistan":"Ouzbékistan","Colombia":"Colombie","England":"Angleterre","Croatia":"Croatie","Ghana":"Ghana","Panama":"Panama"};
-    data.matches.forEach(rem=>{
-      const t1=nm[rem.team1]||rem.team1,t2=nm[rem.team2]||rem.team2;
-      const loc=matches.find(x=>x.date===rem.date&&x.team1===t1&&x.team2===t2);
-      if(loc&&rem.score&&!loc.score?._m)loc.score=rem.score;
-      if(loc&&loc.team1==="À déterminer"&&t1)loc.team1=t1;
-      if(loc&&loc.team2==="À déterminer"&&t2)loc.team2=t2;
-    });
-    lastFetch=Date.now();setSync("ok","À jour · "+hhmm(new Date()));
-    recalc();await saveSt();refresh();
-  }catch(e){setSync("err","Hors ligne");}
+// ─── LIVE API ─────────────────────────────────────────────────────────────────
+
+// Vérifie si un match est actuellement en cours (entre le coup d'envoi et 2h après)
+function hasLiveMatchNow(){
+  const now=new Date();
+  return matches.some(m=>{
+    if(m.score?.ft)return false;
+    const ko=getParisKickoffUTC(m);
+    const endEstimate=new Date(ko.getTime()+2*60*60*1000);
+    return now>=ko && now<=endEstimate;
+  });
 }
-function setSync(s,l){const d=document.getElementById("dot"),lb=document.getElementById("synclbl");if(!d)return;d.className="dot "+s;lb.textContent=l;}
+
+// Retourne le délai de cache adapté à la situation
+function getCacheMs(){
+  return hasLiveMatchNow() ? CACHE_LIVE_MS : CACHE_IDLE_MS;
+}
+
+// Normalise un nom d'équipe de l'API vers le nom français
+function normTeam(raw){
+  if(!raw)return "";
+  return (TEAM_NAMES_EN[raw] || raw).trim();
+}
+
+// Applique les données de worldcup26.ir
+function applyLiveApiData(data){
+  // worldcup26.ir peut retourner un tableau directement ou un objet avec clé "games"/"matches"
+  const list=Array.isArray(data)?data:(data.games||data.matches||data.data||[]);
+  list.forEach(g=>{
+    const raw1=g.homeTeam||g.team1||g.home_team||g.teamA||"";
+    const raw2=g.awayTeam||g.team2||g.away_team||g.teamB||"";
+    const t1=normTeam(raw1);
+    const t2=normTeam(raw2);
+    const dateStr=(g.date||g.matchDate||g.match_date||"").slice(0,10);
+    if(!dateStr||!t1||!t2)return;
+    const loc=matches.find(x=>x.date===dateStr&&x.team1===t1&&x.team2===t2);
+    if(!loc)return;
+    if(loc.score?._m)return; // score corrigé manuellement : on ne touche pas
+
+    // Scores — plusieurs nommages possibles selon la version de l'API
+    const h=g.homeScore??g.home_score??g.score_home??g.scoreA??null;
+    const a=g.awayScore??g.away_score??g.score_away??g.scoreB??null;
+    if(h!==null&&h!==undefined&&a!==null&&a!==undefined){
+      const hN=parseInt(h), aN=parseInt(a);
+      if(!isNaN(hN)&&!isNaN(aN)){
+        if(!loc.score) loc.score={ft:[hN,aN],ko_winner:"",ko_method:"",_m:false};
+        else{ loc.score.ft=[hN,aN]; loc.score._m=false; }
+      }
+    }
+    // Noms des équipes pour les matchs KO encore indéterminés
+    if(loc.team1==="À déterminer"&&t1) loc.team1=t1;
+    if(loc.team2==="À déterminer"&&t2) loc.team2=t2;
+  });
+}
+
+// Applique les données du fallback OpenFootball
+function applyFallbackData(data){
+  (data.matches||[]).forEach(rem=>{
+    const t1=normTeam(rem.team1)||rem.team1;
+    const t2=normTeam(rem.team2)||rem.team2;
+    const loc=matches.find(x=>x.date===rem.date&&x.team1===t1&&x.team2===t2);
+    if(loc&&rem.score&&!loc.score?._m) loc.score=rem.score;
+    if(loc&&loc.team1==="À déterminer"&&t1) loc.team1=t1;
+    if(loc&&loc.team2==="À déterminer"&&t2) loc.team2=t2;
+  });
+}
+
+async function fetchScores(force=false){
+  const cacheMs=getCacheMs();
+  if(!force && Date.now()-lastFetch<cacheMs) return;
+  setSync("spin","Mise à jour…");
+
+  let success=false;
+
+  // 1. Tentative principale : worldcup26.ir (live, sans clé API)
+  try{
+    const ctrl=new AbortController();
+    const timeout=setTimeout(()=>ctrl.abort(),6000); // timeout 6s
+    const r=await fetch(LIVE_API_URL+"?_="+Date.now(),{signal:ctrl.signal});
+    clearTimeout(timeout);
+    if(r.ok){
+      const data=await r.json();
+      applyLiveApiData(data);
+      success=true;
+    }
+  }catch(e){
+    console.warn("worldcup26.ir indisponible, tentative fallback…",e?.message||e);
+  }
+
+  // 2. Fallback : OpenFootball (mise à jour ~quotidienne, très fiable)
+  if(!success){
+    try{
+      const r=await fetch(FALLBACK_API_URL+"?_="+Date.now());
+      if(r.ok){
+        const data=await r.json();
+        applyFallbackData(data);
+        success=true;
+      }
+    }catch(e){
+      console.warn("Fallback OpenFootball aussi indisponible",e?.message||e);
+    }
+  }
+
+  lastFetch=Date.now();
+
+  if(success){
+    const live=hasLiveMatchNow();
+    if(live){
+      setSync("live","⚡ Live · "+hhmm(new Date()));
+    } else {
+      setSync("ok","À jour · "+hhmm(new Date()));
+    }
+    recalc();
+    await saveSt();
+    refresh();
+  } else {
+    setSync("err","Hors ligne");
+  }
+}
+
+function setSync(s,l){
+  const d=document.getElementById("dot"),lb=document.getElementById("synclbl");
+  if(!d)return;
+  d.className="dot "+s;
+  lb.textContent=l;
+}
 function refresh(){
   if(!document.getElementById("tp").classList.contains("hidden"))renderMatches();
   if(!document.getElementById("tf").classList.contains("hidden"))renderFinalPrediction();
@@ -641,7 +757,18 @@ function enterApp(){
   document.getElementById("app").classList.remove("hidden");
   document.getElementById("av").textContent=isAdmin?"⚙":currentUser[0].toUpperCase();
   document.getElementById("adminTab").classList.toggle("hidden",!isAdmin);
-  selectedMatchDate=getDefaultMatchDate();showTab("p");fetchScores(true);setInterval(()=>fetchScores(false),CACHE_MS);setInterval(()=>{if(!document.getElementById("tp").classList.contains("hidden"))renderMatches();},30000);
+  selectedMatchDate=getDefaultMatchDate();
+  showTab("p");
+  fetchScores(true);
+
+  // Polling adaptatif : vérifie toutes les 30s si un rafraîchissement est nécessaire.
+  // fetchScores() décide lui-même d'appeler l'API selon le cache (60s live / 5min idle).
+  setInterval(()=>fetchScores(false), 30*1000);
+
+  // Rafraîchit l'affichage des cartes (pour le compte à rebours deadlines)
+  setInterval(()=>{
+    if(!document.getElementById("tp").classList.contains("hidden")) renderMatches();
+  }, 30000);
 }
 function logout(){
   clearSession();currentUser=null;isAdmin=false;pinBuffer="";pinPseudo="";
@@ -663,41 +790,35 @@ function showTab(t){
   if(t==="p")renderMatches();if(t==="f")renderFinalPrediction();if(t==="c")renderLB();if(t==="a")renderAdmin();
 }
 
-
 function getParisKickoffUTC(m){
   const [year,month,day]=(m.date||"2026-06-11").split("-").map(Number);
   const [hour,minute]=(m.time||"21:00").split(":").map(Number);
-  // Les horaires de l'appli sont saisis en heure de Paris.
-  // Pendant la Coupe du Monde 2026, Paris est en CEST = UTC+2.
-  // On construit donc une date UTC explicite, indépendante du fuseau horaire du téléphone.
+  // Horaires saisis en heure de Paris (CEST = UTC+2)
   return new Date(Date.UTC(year,month-1,day,hour-2,minute,0));
 }
 function competitionStartDate(){
-  // Date de référence uniquement basée sur le premier match de Coupe du Monde.
-  // Les matchs bonus ajoutés avant cette date ne ferment donc pas les bonus compétition.
   const [t1,t2,date,time,grp]=MATCHES_DATA[0];
   return getParisKickoffUTC({date,time});
 }
-
 function firstKnockoutKickoffUTC(){
   const firstKo=matches.find(m=>m.phase==="Huitièmes de finale");
   return firstKo?getParisKickoffUTC(firstKo):competitionStartDate();
 }
 function top4PredictionsOpen(){
-  // Top 4 modifiable pendant toute la phase de poules, puis verrouillé au début des phases finales.
   return new Date() < new Date(firstKnockoutKickoffUTC().getTime()-60000);
 }
+
+// ─── DEADLINE BUTEUR / PASSEUR ────────────────────────────────────────────────
+// Date fixe : 16 juin 2026 à 21h00 heure de Paris (CEST = UTC+2) → 19:00 UTC
 function playerBonusPredictionsOpen(){
-  // Meilleur buteur / meilleur passeur : verrouillés dès le début de la compétition.
-  return new Date() < new Date(competitionStartDate().getTime()-60000);
+  const DEADLINE_UTC = new Date("2026-06-16T19:00:00Z");
+  return new Date() < DEADLINE_UTC;
 }
+
 function finalPredictionsOpen(){
   return top4PredictionsOpen()||playerBonusPredictionsOpen();
 }
 function isKnockoutMatch(m){
-  // Matchs nécessitant un vainqueur en cas de nul :
-  // - phases finales de Coupe du Monde
-  // - match bonus PSG / Arsenal, qui peut aussi aller en prolongation ou aux tirs au but
   return !!m && !m.grp && (isClubBonusMatch(m) || (!m.bonus && m.phase!=="Match bonus · Ligue des Champions"));
 }
 function koNeedsWinner(m,home,away){
@@ -728,7 +849,6 @@ function matchPoints(pr,m){
   const base=pts(pr.home,pr.away,m.score.ft[0],m.score.ft[1]);
   if(base===null)return null;
   let total=base;
-  // Bonus +2 uniquement sur les matchs à élimination directe qui finissent nuls à la fin du temps réglementaire.
   if(koNeedsWinner(m,pr.home,pr.away) && koNeedsWinner(m,m.score.ft[0],m.score.ft[1])){
     if(pr.ko_winner && m.score.ko_winner && pr.ko_winner===m.score.ko_winner){
       if(!m.score.ko_method || !pr.ko_method || pr.ko_method===m.score.ko_method){
@@ -844,7 +964,8 @@ function renderFinalPrediction(){
   const playerOpen=playerBonusPredictionsOpen();
   const firstKo=matches.find(m=>m.phase==="Huitièmes de finale");
   const top4Deadline=firstKo?fdate(firstKo.date)+" à "+firstKo.time:fdate(matches[0].date)+" à "+matches[0].time;
-  const playerDeadline=fdate(matches[0].date)+" à "+matches[0].time;
+  // Deadline fixe buteur/passeur : 16 juin 21h
+  const playerDeadline="16 juin à 21h00";
   if(isAdmin){
     c.innerHTML=`<div class="stitle">Bonus compétition</div><div class="infob">Connecte-toi avec un compte joueur pour saisir les bonus. Le résultat réel se renseigne dans l'onglet Admin.</div>`;
     return;
@@ -854,7 +975,7 @@ function renderFinalPrediction(){
   let html=`<div class="stitle">Bonus compétition</div>
     <div class="infob">
       🏆 <strong style="color:var(--tx)">Top 4</strong> modifiable pendant toute la phase de poules, jusqu'au début des phases finales : <strong style="color:var(--gold)">${top4Deadline}</strong>.<br>
-      ⚽ <strong style="color:var(--tx)">Meilleur buteur / passeur</strong> à saisir avant le début de la compétition : <strong style="color:var(--gold)">${playerDeadline}</strong>.
+      ⚽ <strong style="color:var(--tx)">Meilleur buteur / passeur</strong> à saisir avant le <strong style="color:var(--gold)">${playerDeadline}</strong>.
     </div>`;
 
   if(top4Open||playerOpen){
@@ -869,7 +990,7 @@ function renderFinalPrediction(){
 
       <button class="btn btng" onclick="validateFinalPrediction()">💾 Enregistrer mes bonus</button>
     </div>`;
-    if(!playerOpen){html+=`<div class="infob">🔒 Le meilleur buteur et le meilleur passeur ne sont plus modifiables. Tu peux encore modifier le Top 4 tant que la phase de poules n'est pas terminée.</div>`;}
+    if(!playerOpen){html+=`<div class="infob">🔒 Le meilleur buteur et le meilleur passeur ne sont plus modifiables (deadline : 16 juin 21h). Tu peux encore modifier le Top 4 tant que la phase de poules n'est pas terminée.</div>`;}
   }else{
     html+=`<div class="rc">
       ${finalLine('Champion',pred.winner,20)}
@@ -895,12 +1016,15 @@ function renderFinalPrediction(){
   c.innerHTML=html;
 }
 
-// Status — verrouillage 1 minute avant le coup d'envoi sur une date UTC explicite, donc identique France / Mexico / Denver
 function getStatus(m){
   if(m.score?.ft)return"done";
   const now=new Date();
   const koUTC=getParisKickoffUTC(m);
-  return now>=new Date(koUTC.getTime()-60000)?"locked":"open";
+  const endEstimate=new Date(koUTC.getTime()+2*60*60*1000);
+  // "live" : entre le coup d'envoi et ~2h après (si le score n'est pas encore enregistré)
+  if(now>=koUTC && now<=endEstimate) return "live";
+  if(now>=new Date(koUTC.getTime()-60000)) return "locked";
+  return "open";
 }
 function pad(n){return n.toString().padStart(2,"0");}
 
@@ -986,8 +1110,12 @@ function dayButtonLabel(date){
 function renderDaySelector(){
   const dates=allMatchDates();
   const idx=dates.indexOf(selectedMatchDate);
-  const buttons=dates.map(d=>`<button class="btns ${d===selectedMatchDate?'btng':'btno'}" style="white-space:nowrap;border-radius:20px" onclick="selectMatchDate('${d}')">${dayButtonLabel(d)}</button>`).join('');
-  return `<div class="infob">📅 L'appli affiche automatiquement la journée en cours, ou la prochaine journée avec des matchs.</div>
+  const liveToday=matches.some(m=>m.date===selectedMatchDate&&getStatus(m)==="live");
+  const buttons=dates.map(d=>{
+    const hasLive=matches.some(m=>m.date===d&&getStatus(m)==="live");
+    return `<button class="btns ${d===selectedMatchDate?'btng':'btno'}" style="white-space:nowrap;border-radius:20px${hasLive?';border-color:rgba(255,80,80,.5)':''}" onclick="selectMatchDate('${d}')">${hasLive?'⚡ ':''}${dayButtonLabel(d)}</button>`;
+  }).join('');
+  return `<div class="infob">📅 L'appli affiche automatiquement la journée en cours, ou la prochaine journée avec des matchs.${liveToday?' <strong style="color:#ff7070">⚡ Match en cours — scores mis à jour toutes les 60 s</strong>':''}</div>
   <div style="display:flex;gap:8px;margin-bottom:10px">
     <button class="btn btno btns" ${idx<=0?'disabled style="opacity:.35"':'style=""'} onclick="shiftMatchDate(-1)">← Jour précédent</button>
     <button class="btn btno btns" ${idx>=dates.length-1?'disabled style="opacity:.35"':'style=""'} onclick="shiftMatchDate(1)">Jour suivant →</button>
@@ -1031,8 +1159,10 @@ function buildCard(m){
   const up=pronostics[key]?.[currentUser]||{home:"",away:"",ko_winner:"",ko_method:""};
   const[rh,ra]=m.score?.ft||[null,null];
   const pv=rh!==null?matchPoints(up,m):null;
-  const slbl={open:"Ouvert",locked:"Fermé",done:"Terminé"}[st];
-  const scls={open:"sopen",locked:"slocked",done:"sdone"}[st];
+  const isLive=st==="live";
+
+  const slbl={open:"Ouvert",locked:"Fermé",done:"Terminé",live:"🔴 En direct"}[st];
+  const scls={open:"sopen",locked:"slocked",done:"sdone",live:"slive"}[st];
   const nuit=isNightMatch(m.time)?`<span class="nuit">🌙 nuit</span>`:"";
   const needsKo=koNeedsWinner(m,up.home,up.away);
 
@@ -1066,20 +1196,36 @@ function buildCard(m){
       <button class="btn btns btno" style="padding:6px 12px;font-size:12px" onclick="editPronostic('${key}')">✏️ Modifier</button>
     </div>`;
   }else{
-    sh=`<div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div class="sdisp"><div class="sbox">${up.home!==""?up.home:"–"}</div><span class="ssep">–</span><div class="sbox">${up.away!==""?up.away:"–"}</div></div>${formatKoPrediction(up)}</div>`;
+    // Match live ou terminé ou fermé : affichage du score live si disponible
+    const liveScoreHtml=isLive&&rh!==null
+      ?`<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div class="sdisp">
+            <div class="sbox" style="border-color:rgba(255,80,80,.4);color:#ff9090">${rh}</div>
+            <span class="ssep">–</span>
+            <div class="sbox" style="border-color:rgba(255,80,80,.4);color:#ff9090">${ra}</div>
+          </div>
+          <span class="livebadge">⚡ Live</span>
+        </div>`
+      :`<div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div class="sdisp"><div class="sbox">${up.home!==""?up.home:"–"}</div><span class="ssep">–</span><div class="sbox">${up.away!==""?up.away:"–"}</div></div>${formatKoPrediction(up)}</div>`;
+    sh=liveScoreHtml;
   }
+
   let fl="";
   if(rh!==null){
     const koReal=m.score.ko_winner?` · qualifié : <strong style="color:var(--gold)">${esc(m.score.ko_winner)}</strong>${m.score.ko_method?` (${koMethodLabel(m.score.ko_method)})`:""}`:"";
-    fl=`<span style="font-size:12px;color:var(--tx3)">Résultat : <strong style="color:var(--gl)">${rh}–${ra}</strong>${koReal} <span class="autob">${m.score._m?"✏️ manuel":"🤖 auto"}</span></span>`;
+    const sourceLabel=isLive?'<span class="livebadge">⚡ Live</span>':`<span class="autob">${m.score._m?"✏️ manuel":"🤖 auto"}</span>`;
+    fl=`<span style="font-size:12px;color:var(--tx3)">Score : <strong style="color:${isLive?'#ff9090':'var(--gl)'}">${rh}–${ra}</strong>${koReal} ${sourceLabel}</span>`;
   }
+  else if(isLive){fl=`<span style="font-size:11px;color:#ff7070">⚡ Match en cours…</span>`;}
   else if(st!=="open"){fl=`<span style="font-size:11px;color:var(--tx3)">En attente du résultat…</span>`;}
   else{fl=`<span style="font-size:11px;color:var(--tx3)">${fdate(m.date)}</span>`;}
-  if(up.locked&&st!=="done"){fl+=`<span class="autob">🔒 validé</span>`;}
+  if(up.locked&&st!=="done"&&st!=="live"){fl+=`<span class="autob">🔒 validé</span>`;}
+
   let pb="";
   if(pv!==null){const cls=pv===5||pv===7?"p5":pv===3?"p3":pv===2||pv===4?"p2":"p0";const sign=pv>0?"+":"";pb=`<span class="pb ${cls}">${sign}${pv} pts</span>`;}
 
-  const div=document.createElement("div");div.className=isClubBonusMatch(m)?"mc club-match":"mc";
+  const div=document.createElement("div");
+  div.className=(isClubBonusMatch(m)?"mc club-match":"mc")+(isLive?" live-card":"");
   div.innerHTML=`<div class="mh"><span class="mdate">${fdate(m.date)} · ${m.time}${nuit}</span><span class="ms ${scls}">${slbl}</span></div>
     <div class="mb">
       <div class="team">${teamVisual(m.team1,m)}<span class="tn">${esc(m.team1)}</span></div>
@@ -1266,7 +1412,6 @@ async function deletePlayer(pseudo){
   }
 }
 
-
 function renderFinalAdmin(){
   const c=document.getElementById("finalAdminBox");
   if(!c)return;
@@ -1333,9 +1478,15 @@ function renderAdmin(){
   adminMatches.forEach(m=>{
     const key=mkey(m),[rh,ra]=m.score?.ft||["",""];
     const adminNeedsKo=koNeedsWinner(m,rh,ra);
+    const isLive=getStatus(m)==="live";
     const div=document.createElement("div");
-    div.style.cssText="background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:14px;margin-bottom:10px";
-    div.innerHTML=`<div style="font-size:11px;color:var(--tx3);margin-bottom:8px"><span style="background:var(--gd);color:var(--gold);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600">${m.grp||m.phase}</span> · ${fdate(m.date)} ${m.time}${m.score?._m?' <span style="color:var(--gold);font-size:10px">✏️ manuel</span>':''}</div>
+    div.style.cssText=`background:var(--sf);border:1px solid ${isLive?'rgba(255,80,80,.35)':'var(--br)'};border-radius:var(--r);padding:14px;margin-bottom:10px`;
+    div.innerHTML=`<div style="font-size:11px;color:var(--tx3);margin-bottom:8px">
+        <span style="background:var(--gd);color:var(--gold);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600">${m.grp||m.phase}</span>
+        · ${fdate(m.date)} ${m.time}
+        ${isLive?'<span style="color:#ff7070;font-size:10px">⚡ Live</span>':''}
+        ${m.score?._m?' <span style="color:var(--gold);font-size:10px">✏️ manuel</span>':''}
+      </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span style="flex:1;text-align:right;font-size:13px;display:flex;align-items:center;justify-content:flex-end;gap:6px">${teamVisual(m.team1,m)} <span>${esc(m.team1)}</span></span>
         <select class="inp score-select" style="width:58px;text-align:center;padding:8px;font-size:18px;font-family:'Bebas Neue',cursive" onchange="setM('${key}',0,this.value)">${scoreOptions(rh)}</select>
