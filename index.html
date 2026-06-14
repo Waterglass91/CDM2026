@@ -248,8 +248,8 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     </div>
   </div>
   <div id="ta" class="main hidden fadein">
-    <div class="infob">⚙️ Scores récupérés automatiquement via worldcup26.ir (live) + fallback OpenFootball. Tu peux forcer la mise à jour ou corriger manuellement.</div>
-    <button class="btn" style="margin-bottom:16px" onclick="fetchScores(true)">🔄 Forcer la mise à jour</button>
+    <div class="infob">⚙️ Les scores API sont consultés en local uniquement. Aucun score API n’est sauvegardé automatiquement. Pour verrouiller un résultat, corrige-le manuellement ci-dessous.</div>
+    <button class="btn" style="margin-bottom:16px" onclick="fetchScores(true)">🔄 Actualiser les scores API en local</button>
 
     <div class="stitle">Joueurs inscrits</div>
     <div id="playerList" style="margin-bottom:20px"></div>
@@ -276,6 +276,8 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 const SUPABASE_URL = "https://qderhrrkxkhkrundxnwh.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_l5v8RTV9e3C7bIYwtt2tLA_VVssSSJJ";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const APP_VERSION = "safe-no-auto-write-2026-06-14";
+console.log("CM2026 app version:", APP_VERSION);
 
 const ADMIN_CODE="cm2026admin";
 
@@ -623,6 +625,7 @@ async function saveScoreRow(key,m,manual=true){
     ko_winner:m.score.ko_winner||null,
     ko_method:m.score.ko_method||null,
     manual:!!manual,
+    app_version:APP_VERSION,
     updated_at:new Date().toISOString()
   },{onConflict:"match_id"});
 
@@ -630,27 +633,10 @@ async function saveScoreRow(key,m,manual=true){
 }
 
 async function saveApiScoresOnly(){
-  // Sécurité importante :
-  // seuls les admins peuvent pousser les scores API dans Supabase.
-  // Les joueurs peuvent les consulter en local, mais ne peuvent plus écraser wc_scores.
-  if(!isAdmin)return;
-
-  const scoreRows=matches
-    .filter(m=>m.score?.ft && !m.score._m && m.score.ft[0]!==null && m.score.ft[1]!==null)
-    .map(m=>({
-      match_id:mkey(m),
-      home:Number(m.score.ft[0]),
-      away:Number(m.score.ft[1]),
-      ko_winner:m.score.ko_winner||null,
-      ko_method:m.score.ko_method||null,
-      manual:false,
-      updated_at:new Date().toISOString()
-    }));
-
-  if(scoreRows.length){
-    const { error } = await db.from("wc_scores").upsert(scoreRows,{onConflict:"match_id"});
-    if(error) throw error;
-  }
+  // Désactivé volontairement.
+  // Les scores API ne sont jamais sauvegardés automatiquement dans Supabase.
+  // Seules les actions admin manuelles setM/setMKo écrivent wc_scores.
+  console.warn("saveApiScoresOnly() désactivée : aucune sauvegarde automatique des scores API.");
 }
 
 function clearAppIntervals(){
@@ -743,8 +729,9 @@ async function fetchScores(force=false){
 
   setSync("spin","Mise à jour…");
 
-  // On recharge d'abord Supabase pour récupérer les corrections manuelles
-  // et éviter qu'une ancienne fenêtre écrase un score corrigé.
+  // IMPORTANT :
+  // Ouvrir l'application ne doit JAMAIS écrire dans Supabase.
+  // On recharge Supabase, puis on affiche éventuellement les scores API en local uniquement.
   await loadStPreserveDrafts();
 
   let success=false;
@@ -780,29 +767,19 @@ async function fetchScores(force=false){
 
   lastFetch=Date.now();
 
-  if(success){
-    // Les joueurs n'écrivent jamais les scores en base.
-    // L'admin peut pousser les scores API, mais jamais les scores manuels déjà verrouillés.
-    if(isAdmin){
-      try{
-        await saveApiScoresOnly();
-        await loadSt();
-      }catch(e){
-        console.error("Erreur sauvegarde scores API:",e);
-        toast("❌ Scores API non sauvegardés");
-      }
-    }
+  const live=hasLiveMatchNow();
 
-    const live=hasLiveMatchNow();
-    setSync(live?"live":"ok",(live?"⚡ Live · ":"À jour · ")+hhmm(new Date()));
-    recalc();
-    refresh();
+  if(success){
+    // Aucun upsert ici.
+    // Les scores API sont affichés localement, mais ne sont pas sauvegardés.
+    // Seules les corrections manuelles admin via setM/setMKo écrivent wc_scores.
+    setSync(live?"live":"ok",(live?"⚡ Live local · ":"À jour local · ")+hhmm(new Date()));
   }else{
-    // Même si l'API est indisponible, Supabase a été rechargé au début.
-    recalc();
-    refresh();
     setSync("err","API hors ligne · Supabase chargé");
   }
+
+  recalc();
+  refresh();
 }
 
 function setSync(s,l){
@@ -1064,6 +1041,7 @@ async function validateFinalPrediction(){
       top_scorer:pred.top_scorer,
       top_assister:pred.top_assister,
       locked:true,
+      app_version:APP_VERSION,
       updated_at:new Date().toISOString()
     },{onConflict:"pseudo"});
     if(error) throw error;
@@ -1427,6 +1405,7 @@ async function validatePronostic(key){
       ko_winner:ko_winner||null,
       ko_method:ko_method||null,
       locked:true,
+      app_version:APP_VERSION,
       updated_at:new Date().toISOString()
     },{onConflict:"match_id,pseudo"});
     if(error) throw error;
