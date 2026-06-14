@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>⚽ CM 2026 – Paris entre amis</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -471,6 +474,7 @@ function buildMatches(){
 let matches=buildMatches();
 let pronostics={},players={},pinStore={},finalPredictions={},finalResult=null;
 let currentUser=null,isAdmin=false,lastFetch=0;
+let scorePollTimer=null,statePollTimer=null,uiRefreshTimer=null;
 let selectedMatchDate=null;
 let pinPseudo="",pinBuffer="",pinMode="";
 
@@ -560,59 +564,99 @@ async function loadSt(){
   }
 }
 async function saveSt(){
-  try{
-    const playerRows=Object.entries(players).map(([pseudo,data])=>({
-      pseudo,
-      pin_hash:pinStore[pseudo.toLowerCase()]||"",
-      total_pts:data.totalPts||0
-    })).filter(p=>p.pin_hash);
+  // Fonction volontairement neutralisée.
+  // Ancien comportement dangereux : cette fonction réécrivait en masse les joueurs,
+  // les pronostics et les scores depuis l'état local d'une fenêtre potentiellement ancienne.
+  // Désormais, chaque action écrit uniquement sa propre table via une fonction dédiée.
+  console.warn("saveSt() est désactivée pour éviter les écritures globales depuis une vieille fenêtre.");
+}
 
-    if(playerRows.length){
-      const { error } = await db.from("wc_players").upsert(playerRows,{onConflict:"pseudo"});
-      if(error) throw error;
+function snapshotLocalDrafts(){
+  const drafts={};
+  if(!currentUser||isAdmin)return drafts;
+
+  Object.entries(pronostics||{}).forEach(([match_id,byPlayer])=>{
+    const pr=byPlayer?.[currentUser];
+    if(pr && !pr.locked){
+      drafts[match_id]={...pr};
     }
+  });
 
-    const pronosticRows=[];
-    Object.entries(pronostics).forEach(([match_id,byPlayer])=>{
-      Object.entries(byPlayer).forEach(([pseudo,pr])=>{
-        if(pr.home!=="" || pr.away!==""){
-          pronosticRows.push({
-            match_id,
-            pseudo,
-            home:pr.home===""?null:Number(pr.home),
-            away:pr.away===""?null:Number(pr.away),
-            ko_winner:pr.ko_winner||null,
-            ko_method:pr.ko_method||null,
-            locked:!!pr.locked,
-            updated_at:new Date().toISOString()
-          });
-        }
-      });
-    });
+  return drafts;
+}
 
-    if(pronosticRows.length){
-      const { error } = await db.from("wc_pronostics").upsert(pronosticRows,{onConflict:"match_id,pseudo"});
-      if(error) throw error;
-    }
+function restoreLocalDrafts(drafts){
+  if(!currentUser||isAdmin||!drafts)return;
 
-    const scoreRows=matches.filter(m=>m.score?.ft).map(m=>({
+  Object.entries(drafts).forEach(([match_id,pr])=>{
+    const m=matches.find(x=>mkey(x)===String(match_id));
+    if(!m||getStatus(m)!=="open")return;
+
+    if(!pronostics[match_id])pronostics[match_id]={};
+    pronostics[match_id][currentUser]={...pr,locked:false};
+  });
+}
+
+async function loadStPreserveDrafts(){
+  const drafts=snapshotLocalDrafts();
+  await loadSt();
+  restoreLocalDrafts(drafts);
+}
+
+async function reloadState(){
+  await loadStPreserveDrafts();
+  recalc();
+  refresh();
+}
+
+async function saveScoreRow(key,m,manual=true){
+  if(!isAdmin){
+    console.warn("Écriture score bloquée hors admin",key);
+    return;
+  }
+  if(!m?.score?.ft || m.score.ft[0]===null || m.score.ft[1]===null)return;
+
+  const { error } = await db.from("wc_scores").upsert({
+    match_id:key,
+    home:Number(m.score.ft[0]),
+    away:Number(m.score.ft[1]),
+    ko_winner:m.score.ko_winner||null,
+    ko_method:m.score.ko_method||null,
+    manual:!!manual,
+    updated_at:new Date().toISOString()
+  },{onConflict:"match_id"});
+
+  if(error) throw error;
+}
+
+async function saveApiScoresOnly(){
+  // Sécurité importante :
+  // seuls les admins peuvent pousser les scores API dans Supabase.
+  // Les joueurs peuvent les consulter en local, mais ne peuvent plus écraser wc_scores.
+  if(!isAdmin)return;
+
+  const scoreRows=matches
+    .filter(m=>m.score?.ft && !m.score._m && m.score.ft[0]!==null && m.score.ft[1]!==null)
+    .map(m=>({
       match_id:mkey(m),
-      home:m.score.ft[0],
-      away:m.score.ft[1],
+      home:Number(m.score.ft[0]),
+      away:Number(m.score.ft[1]),
       ko_winner:m.score.ko_winner||null,
       ko_method:m.score.ko_method||null,
-      manual:!!m.score._m,
+      manual:false,
       updated_at:new Date().toISOString()
     }));
 
-    if(scoreRows.length){
-      const { error } = await db.from("wc_scores").upsert(scoreRows,{onConflict:"match_id"});
-      if(error) throw error;
-    }
-  }catch(e){
-    console.error("Erreur Supabase saveSt:",e);
-    toast("❌ Erreur sauvegarde Supabase");
+  if(scoreRows.length){
+    const { error } = await db.from("wc_scores").upsert(scoreRows,{onConflict:"match_id"});
+    if(error) throw error;
   }
+}
+
+function clearAppIntervals(){
+  if(scorePollTimer){clearInterval(scorePollTimer);scorePollTimer=null;}
+  if(statePollTimer){clearInterval(statePollTimer);statePollTimer=null;}
+  if(uiRefreshTimer){clearInterval(uiRefreshTimer);uiRefreshTimer=null;}
 }
 
 // ─── LIVE API ─────────────────────────────────────────────────────────────────
@@ -676,23 +720,39 @@ function applyFallbackData(data){
     const t1=normTeam(rem.team1)||rem.team1;
     const t2=normTeam(rem.team2)||rem.team2;
     const loc=matches.find(x=>x.date===rem.date&&x.team1===t1&&x.team2===t2);
-    if(loc&&rem.score&&!loc.score?._m) loc.score=rem.score;
-    if(loc&&loc.team1==="À déterminer"&&t1) loc.team1=t1;
-    if(loc&&loc.team2==="À déterminer"&&t2) loc.team2=t2;
+    if(!loc)return;
+
+    if(rem.score && !loc.score?._m){
+      const ft=Array.isArray(rem.score.ft)?rem.score.ft:null;
+      if(ft && ft.length>=2){
+        const h=parseInt(ft[0]),a=parseInt(ft[1]);
+        if(!isNaN(h)&&!isNaN(a)){
+          loc.score={ft:[h,a],ko_winner:"",ko_method:"",_m:false};
+        }
+      }
+    }
+
+    if(loc.team1==="À déterminer"&&t1) loc.team1=t1;
+    if(loc.team2==="À déterminer"&&t2) loc.team2=t2;
   });
 }
 
 async function fetchScores(force=false){
   const cacheMs=getCacheMs();
   if(!force && Date.now()-lastFetch<cacheMs) return;
+
   setSync("spin","Mise à jour…");
+
+  // On recharge d'abord Supabase pour récupérer les corrections manuelles
+  // et éviter qu'une ancienne fenêtre écrase un score corrigé.
+  await loadStPreserveDrafts();
 
   let success=false;
 
   // 1. Tentative principale : worldcup26.ir (live, sans clé API)
   try{
     const ctrl=new AbortController();
-    const timeout=setTimeout(()=>ctrl.abort(),6000); // timeout 6s
+    const timeout=setTimeout(()=>ctrl.abort(),6000);
     const r=await fetch(LIVE_API_URL+"?_="+Date.now(),{signal:ctrl.signal});
     clearTimeout(timeout);
     if(r.ok){
@@ -704,7 +764,7 @@ async function fetchScores(force=false){
     console.warn("worldcup26.ir indisponible, tentative fallback…",e?.message||e);
   }
 
-  // 2. Fallback : OpenFootball (mise à jour ~quotidienne, très fiable)
+  // 2. Fallback : OpenFootball
   if(!success){
     try{
       const r=await fetch(FALLBACK_API_URL+"?_="+Date.now());
@@ -721,17 +781,27 @@ async function fetchScores(force=false){
   lastFetch=Date.now();
 
   if(success){
-    const live=hasLiveMatchNow();
-    if(live){
-      setSync("live","⚡ Live · "+hhmm(new Date()));
-    } else {
-      setSync("ok","À jour · "+hhmm(new Date()));
+    // Les joueurs n'écrivent jamais les scores en base.
+    // L'admin peut pousser les scores API, mais jamais les scores manuels déjà verrouillés.
+    if(isAdmin){
+      try{
+        await saveApiScoresOnly();
+        await loadSt();
+      }catch(e){
+        console.error("Erreur sauvegarde scores API:",e);
+        toast("❌ Scores API non sauvegardés");
+      }
     }
+
+    const live=hasLiveMatchNow();
+    setSync(live?"live":"ok",(live?"⚡ Live · ":"À jour · ")+hhmm(new Date()));
     recalc();
-    await saveSt();
     refresh();
-  } else {
-    setSync("err","Hors ligne");
+  }else{
+    // Même si l'API est indisponible, Supabase a été rechargé au début.
+    recalc();
+    refresh();
+    setSync("err","API hors ligne · Supabase chargé");
   }
 }
 
@@ -797,24 +867,34 @@ async function validatePin(){
   }
 }
 function enterApp(){
-  document.getElementById("screenPin").classList.add("hidden");document.getElementById("screenLogin").classList.add("hidden");
+  clearAppIntervals();
+
+  document.getElementById("screenPin").classList.add("hidden");
+  document.getElementById("screenLogin").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
   document.getElementById("av").textContent=isAdmin?"⚙":currentUser[0].toUpperCase();
   document.getElementById("adminTab").classList.toggle("hidden",!isAdmin);
   selectedMatchDate=getDefaultMatchDate();
   showTab("p");
+
   fetchScores(true);
 
-  // Polling adaptatif : vérifie toutes les 30s si un rafraîchissement est nécessaire.
-  // fetchScores() décide lui-même d'appeler l'API selon le cache (60s live / 5min idle).
-  setInterval(()=>fetchScores(false), 30*1000);
+  // Recharge Supabase régulièrement pour voir les pronos validés par les autres joueurs
+  // sans avoir à rafraîchir la page.
+  statePollTimer=setInterval(async()=>{
+    await reloadState();
+  },15000);
 
-  // Rafraîchit l'affichage des cartes (pour le compte à rebours deadlines)
-  setInterval(()=>{
+  // Rafraîchissement scores/API selon le cache live/idle.
+  scorePollTimer=setInterval(()=>fetchScores(false),30000);
+
+  // Rafraîchit seulement l'affichage local pour les deadlines.
+  uiRefreshTimer=setInterval(()=>{
     if(!document.getElementById("tp").classList.contains("hidden")) renderMatches();
-  }, 30000);
+  },30000);
 }
 function logout(){
+  clearAppIntervals();
   clearSession();currentUser=null;isAdmin=false;pinBuffer="";pinPseudo="";
   document.getElementById("app").classList.add("hidden");document.getElementById("screenPin").classList.add("hidden");
   document.getElementById("screenLogin").classList.remove("hidden");document.getElementById("pseudo").value="";
@@ -987,7 +1067,7 @@ async function validateFinalPrediction(){
       updated_at:new Date().toISOString()
     },{onConflict:"pseudo"});
     if(error) throw error;
-    finalPredictions[currentUser]=pred;
+    finalPredictions[currentUser]={...pred,locked:true};
     toast("✅ Bonus enregistrés dans Supabase");
     renderFinalPrediction();
   }catch(e){
@@ -1093,8 +1173,10 @@ function exactScoreCount(ps){
   let n=0;
   matches.forEach(m=>{
     if(!m.score?.ft)return;
+    const pr=pronostics[mkey(m)]?.[ps];
+    if(!pr?.locked)return;
     const[rh,ra]=m.score.ft;
-    if(isExactScore(pronostics[mkey(m)]?.[ps],rh,ra))n++;
+    if(isExactScore(pr,rh,ra))n++;
   });
   return n;
 }
@@ -1106,6 +1188,7 @@ function recalc(){
   matches.forEach(m=>{
     if(!m.score?.ft)return;
     Object.entries(pronostics[mkey(m)]||{}).forEach(([ps,pr])=>{
+      if(!pr?.locked)return;
       const v=matchPoints(pr,m);
       if(v!==null)p[ps]=(p[ps]||0)+v;
     });
@@ -1613,8 +1696,7 @@ async function saveFinalResult(){
     },{onConflict:"id"});
     if(error) throw error;
     finalResult=r;
-    recalc();
-    await saveSt();
+    await reloadState();
     toast("✅ Résultats bonus sauvegardés");
     renderFinalAdmin();renderLB();renderFinalPrediction();
   }catch(e){
@@ -1662,27 +1744,22 @@ function renderAdmin(){
   });
 }
 async function setM(key,idx,val){
+  if(!isAdmin){toast("❌ Accès admin requis");return;}
   const m=matches.find(x=>mkey(x)===key);if(!m)return;
   if(!m.score?.ft)m.score={ft:[null,null],ko_winner:"",ko_method:"",_m:true};
-  m.score.ft[idx]=val===""?null:parseInt(val);m.score._m=true;
+  m.score.ft[idx]=val===""?null:parseInt(val);
+  m.score._m=true;
+
   if(!koNeedsWinner(m,m.score.ft[0],m.score.ft[1])){
     m.score.ko_winner="";
     m.score.ko_method="";
   }
+
   if(m.score.ft[0]!==null&&m.score.ft[1]!==null){
     recalc();
     try{
-      const { error } = await db.from("wc_scores").upsert({
-        match_id:key,
-        home:m.score.ft[0],
-        away:m.score.ft[1],
-        ko_winner:m.score.ko_winner||null,
-        ko_method:m.score.ko_method||null,
-        manual:true,
-        updated_at:new Date().toISOString()
-      },{onConflict:"match_id"});
-      if(error) throw error;
-      await saveSt();
+      await saveScoreRow(key,m,true);
+      await reloadState();
       toast("✅ Score sauvegardé");
       renderAdmin();
     }catch(e){
@@ -1694,24 +1771,17 @@ async function setM(key,idx,val){
   }
 }
 async function setMKo(key,field,val){
+  if(!isAdmin){toast("❌ Accès admin requis");return;}
   const m=matches.find(x=>mkey(x)===key);if(!m||!m.score?.ft)return;
   if(field==="winner")m.score.ko_winner=val;
   if(field==="method")m.score.ko_method=val;
   m.score._m=true;
   recalc();
   try{
-    const { error } = await db.from("wc_scores").upsert({
-      match_id:key,
-      home:m.score.ft[0],
-      away:m.score.ft[1],
-      ko_winner:m.score.ko_winner||null,
-      ko_method:m.score.ko_method||null,
-      manual:true,
-      updated_at:new Date().toISOString()
-    },{onConflict:"match_id"});
-    if(error) throw error;
-    await saveSt();
+    await saveScoreRow(key,m,true);
+    await reloadState();
     toast("✅ Qualification sauvegardée");
+    renderAdmin();
   }catch(e){
     console.error("Erreur sauvegarde qualification:",e);
     toast("❌ Qualification non sauvegardée");
