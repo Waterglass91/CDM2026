@@ -276,7 +276,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 const SUPABASE_URL = "https://qderhrrkxkhkrundxnwh.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_l5v8RTV9e3C7bIYwtt2tLA_VVssSSJJ";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const APP_VERSION = "safe-no-auto-write-2026-06-14";
+const APP_VERSION = "safe-no-auto-write-2026-06-23-horaires";
 console.log("CM2026 app version:", APP_VERSION);
 
 const ADMIN_CODE="cm2026admin";
@@ -339,47 +339,48 @@ const MATCHES_DATA = [
   ["Tunisie","Japon","2026-06-21","06:00","Groupe F"],
   ["Espagne","Arabie saoudite","2026-06-21","18:00","Groupe H"],
   ["Belgique","Iran","2026-06-21","21:00","Groupe G"],
-  ["Égypte","Nouvelle-Zélande","2026-06-22","00:00","Groupe G"],
-  ["Uruguay","Cap-Vert","2026-06-22","03:00","Groupe H"],
+  ["Uruguay","Cap-Vert","2026-06-22","00:00","Groupe H"],
+  ["Nouvelle-Zélande","Égypte","2026-06-22","03:00","Groupe G"],
+  ["Argentine","Autriche","2026-06-22","19:00","Groupe J"],
   ["France","Irak","2026-06-22","23:00","Groupe I"],
   ["Norvège","Sénégal","2026-06-23","02:00","Groupe I"],
-  ["Argentine","Autriche","2026-06-23","03:00","Groupe J"],
-  ["Algérie","Jordanie","2026-06-23","03:00","Groupe J"],
+  ["Jordanie","Algérie","2026-06-23","05:00","Groupe J"],
   ["Portugal","Ouzbékistan","2026-06-23","19:00","Groupe K"],
-  ["Colombie","RD Congo","2026-06-23","22:00","Groupe K"],
-  ["Angleterre","Ghana","2026-06-24","01:00","Groupe L"],
-  ["Croatie","Panama","2026-06-24","01:00","Groupe L"],
-  ["Mexique","Tchéquie","2026-06-24","21:00","Groupe A"],
-  ["Afrique du Sud","Corée du Sud","2026-06-24","21:00","Groupe A"],
-  ["Canada","Suisse","2026-06-25","00:00","Groupe B"],
-  ["Bosnie-Herzégovine","Qatar","2026-06-25","00:00","Groupe B"],
-  ["États-Unis","Turquie","2026-06-25","03:00","Groupe D"],
-  ["Australie","Paraguay","2026-06-25","03:00","Groupe D"],
-  ["Allemagne","Équateur","2026-06-25","18:00","Groupe E"],
-  ["Côte d'Ivoire","Curaçao","2026-06-25","18:00","Groupe E"],
-  ["Pays-Bas","Tunisie","2026-06-26","00:00","Groupe F"],
-  ["Japon","Suède","2026-06-26","00:00","Groupe F"],
-  ["Brésil","Écosse","2026-06-26","21:00","Groupe C"],
-  ["Maroc","Haïti","2026-06-26","21:00","Groupe C"],
-  ["France","Norvège","2026-06-26","21:00","Groupe I"],
+  ["Angleterre","Ghana","2026-06-23","22:00","Groupe L"],
+  ["Panama","Croatie","2026-06-24","01:00","Groupe L"],
+  ["Colombie","RD Congo","2026-06-24","04:00","Groupe K"],
+  ["Suisse","Canada","2026-06-24","21:00","Groupe B"],
+  ["Bosnie-Herzégovine","Qatar","2026-06-24","21:00","Groupe B"],
+  ["Écosse","Brésil","2026-06-25","00:00","Groupe C"],
+  ["Maroc","Haïti","2026-06-25","00:00","Groupe C"],
+  ["Tchéquie","Mexique","2026-06-25","03:00","Groupe A"],
+  ["Afrique du Sud","Corée du Sud","2026-06-25","03:00","Groupe A"],
+  ["Curaçao","Côte d'Ivoire","2026-06-25","22:00","Groupe E"],
+  ["Équateur","Allemagne","2026-06-25","22:00","Groupe E"],
+  ["Japon","Suède","2026-06-26","01:00","Groupe F"],
+  ["Tunisie","Pays-Bas","2026-06-26","01:00","Groupe F"],
+  ["Turquie","États-Unis","2026-06-26","04:00","Groupe D"],
+  ["Paraguay","Australie","2026-06-26","04:00","Groupe D"],
+  ["Norvège","France","2026-06-26","21:00","Groupe I"],
   ["Sénégal","Irak","2026-06-26","21:00","Groupe I"],
-  ["Espagne","Uruguay","2026-06-27","00:00","Groupe H"],
-  ["Cap-Vert","Arabie saoudite","2026-06-27","00:00","Groupe H"],
-  ["Belgique","Nouvelle-Zélande","2026-06-27","05:00","Groupe G"],
-  ["Iran","Égypte","2026-06-27","05:00","Groupe G"],
-  ["Argentine","Jordanie","2026-06-27","21:00","Groupe J"],
-  ["Algérie","Autriche","2026-06-27","21:00","Groupe J"],
-  ["Portugal","Colombie","2026-06-27","21:00","Groupe K"],
-  ["RD Congo","Ouzbékistan","2026-06-27","21:00","Groupe K"],
-  ["Angleterre","Panama","2026-06-27","21:00","Groupe L"],
-  ["Croatie","Ghana","2026-06-27","21:00","Groupe L"],
+  ["Cap-Vert","Arabie saoudite","2026-06-27","02:00","Groupe H"],
+  ["Uruguay","Espagne","2026-06-27","02:00","Groupe H"],
+  ["Égypte","Iran","2026-06-27","05:00","Groupe G"],
+  ["Nouvelle-Zélande","Belgique","2026-06-27","05:00","Groupe G"],
+  ["Panama","Angleterre","2026-06-27","23:00","Groupe L"],
+  ["Croatie","Ghana","2026-06-27","23:00","Groupe L"],
+  ["Colombie","Portugal","2026-06-28","01:30","Groupe K"],
+  ["RD Congo","Ouzbékistan","2026-06-28","01:30","Groupe K"],
+  ["Algérie","Autriche","2026-06-28","04:00","Groupe J"],
+  ["Jordanie","Argentine","2026-06-28","04:00","Groupe J"],
 ];
 
 const KO_DATA = [
-  {phase:"Huitièmes de finale", n:16, dates:["2026-06-29","2026-06-29","2026-06-30","2026-06-30","2026-07-01","2026-07-01","2026-07-02","2026-07-02","2026-07-01","2026-07-01","2026-07-02","2026-07-02","2026-07-03","2026-07-03","2026-07-04","2026-07-04"], times:["19:00","22:00","19:00","22:00","00:00","19:00","00:00","19:00","22:00","22:00","22:00","22:00","19:00","22:00","19:00","22:00"]},
-  {phase:"Quarts de finale", n:8, dates:["2026-07-05","2026-07-05","2026-07-06","2026-07-06","2026-07-07","2026-07-07","2026-07-08","2026-07-08"], times:["19:00","22:00","19:00","22:00","19:00","22:00","19:00","22:00"]},
-  {phase:"Demi-finales", n:4, dates:["2026-07-11","2026-07-11","2026-07-12","2026-07-12"], times:["19:00","22:00","19:00","22:00"]},
-  {phase:"3e place", n:1, dates:["2026-07-15"], times:["21:00"]},
+  {phase:"Seizièmes de finale", n:16, dates:["2026-06-28","2026-06-29","2026-06-29","2026-06-30","2026-06-30","2026-06-30","2026-07-01","2026-07-01","2026-07-01","2026-07-02","2026-07-02","2026-07-03","2026-07-03","2026-07-03","2026-07-04","2026-07-04"], times:["21:00","19:00","22:30","03:00","19:00","23:00","03:00","18:00","22:00","02:00","21:00","01:00","05:00","20:00","00:00","03:30"]},
+  {phase:"Huitièmes de finale", n:8, dates:["2026-07-04","2026-07-04","2026-07-05","2026-07-06","2026-07-06","2026-07-07","2026-07-07","2026-07-07"], times:["19:00","23:00","22:00","02:00","21:00","02:00","18:00","22:00"]},
+  {phase:"Quarts de finale", n:4, dates:["2026-07-09","2026-07-10","2026-07-11","2026-07-12"], times:["22:00","21:00","23:00","03:00"]},
+  {phase:"Demi-finales", n:2, dates:["2026-07-14","2026-07-15"], times:["21:00","21:00"]},
+  {phase:"3e place", n:1, dates:["2026-07-18"], times:["23:00"]},
   {phase:"Finale", n:1, dates:["2026-07-19"], times:["21:00"]},
 ];
 
@@ -421,18 +422,18 @@ const COUNTRY_CODES={
 // Table de correspondance noms anglais → noms français (pour les deux APIs)
 const TEAM_NAMES_EN={
   "Mexico":"Mexique","South Africa":"Afrique du Sud","South Korea":"Corée du Sud",
-  "Czech Republic":"Tchéquie","Canada":"Canada","Bosnia and Herzegovina":"Bosnie-Herzégovine",
+  "Czech Republic":"Tchéquie","Czechia":"Tchéquie","Canada":"Canada","Bosnia and Herzegovina":"Bosnie-Herzégovine",
   "Qatar":"Qatar","Switzerland":"Suisse","Brazil":"Brésil","Morocco":"Maroc",
   "Haiti":"Haïti","Scotland":"Écosse","USA":"États-Unis","United States":"États-Unis",
-  "Paraguay":"Paraguay","Australia":"Australie","Turkey":"Turquie","Germany":"Allemagne",
+  "Paraguay":"Paraguay","Australia":"Australie","Turkey":"Turquie","Türkiye":"Turquie","Turkiye":"Turquie","Germany":"Allemagne",
   "Curaçao":"Curaçao","Ivory Coast":"Côte d'Ivoire","Cote d'Ivoire":"Côte d'Ivoire",
   "Ecuador":"Équateur","Netherlands":"Pays-Bas","Japan":"Japon","Sweden":"Suède",
   "Tunisia":"Tunisie","Belgium":"Belgique","Egypt":"Égypte","Iran":"Iran",
-  "New Zealand":"Nouvelle-Zélande","Spain":"Espagne","Cape Verde":"Cap-Vert",
+  "New Zealand":"Nouvelle-Zélande","Spain":"Espagne","Cape Verde":"Cap-Vert","Cabo Verde":"Cap-Vert",
   "Saudi Arabia":"Arabie saoudite","Uruguay":"Uruguay","France":"France",
   "Senegal":"Sénégal","Iraq":"Irak","Norway":"Norvège","Argentina":"Argentine",
   "Algeria":"Algérie","Austria":"Autriche","Jordan":"Jordanie","Portugal":"Portugal",
-  "DR Congo":"RD Congo","Democratic Republic of Congo":"RD Congo",
+  "DR Congo":"RD Congo","Congo DR":"RD Congo","Congo Dr":"RD Congo","Democratic Republic of Congo":"RD Congo",
   "Uzbekistan":"Ouzbékistan","Colombia":"Colombie","England":"Angleterre",
   "Croatia":"Croatie","Ghana":"Ghana","Panama":"Panama"
 };
@@ -666,7 +667,39 @@ function getCacheMs(){
 // Normalise un nom d'équipe de l'API vers le nom français
 function normTeam(raw){
   if(!raw)return "";
-  return (TEAM_NAMES_EN[raw] || raw).trim();
+  return (TEAM_NAMES_EN[String(raw).trim()] || String(raw).trim());
+}
+
+function dayDiff(a,b){
+  if(!a||!b)return 999;
+  const da=new Date(a+"T12:00:00Z");
+  const db=new Date(b+"T12:00:00Z");
+  return Math.abs(Math.round((da-db)/(24*60*60*1000)));
+}
+
+function findMatchFromApiTeams(t1,t2,dateStr=""){
+  if(!t1||!t2)return null;
+  const candidates=matches
+    .filter(x=>!x.bonus && (
+      (x.team1===t1&&x.team2===t2) ||
+      (x.team1===t2&&x.team2===t1)
+    ))
+    .map(x=>({
+      loc:x,
+      reversed:x.team1===t2&&x.team2===t1,
+      diff:dateStr?dayDiff(x.date,dateStr):0
+    }))
+    .sort((a,b)=>a.diff-b.diff);
+
+  // Les APIs peuvent renvoyer la date locale US/Canada/Mexique ou la date UTC.
+  // Pour un match affiché à 03:00 / 04:00 / 05:00 à Paris, la date API peut donc être la veille.
+  return candidates.length && candidates[0].diff<=1 ? candidates[0] : null;
+}
+
+function applyApiScore(loc,hN,aN,reversed=false){
+  const ft=reversed?[aN,hN]:[hN,aN];
+  if(!loc.score) loc.score={ft,ko_winner:"",ko_method:"",_m:false};
+  else{ loc.score.ft=ft; loc.score._m=false; }
 }
 
 // Applique les données de worldcup26.ir
@@ -679,9 +712,10 @@ function applyLiveApiData(data){
     const t1=normTeam(raw1);
     const t2=normTeam(raw2);
     const dateStr=(g.date||g.matchDate||g.match_date||"").slice(0,10);
-    if(!dateStr||!t1||!t2)return;
-    const loc=matches.find(x=>x.date===dateStr&&x.team1===t1&&x.team2===t2);
-    if(!loc)return;
+    const found=findMatchFromApiTeams(t1,t2,dateStr);
+    if(!found)return;
+
+    const loc=found.loc;
     if(loc.score?._m)return; // score corrigé manuellement : on ne touche pas
 
     // Scores — plusieurs nommages possibles selon la version de l'API
@@ -689,14 +723,8 @@ function applyLiveApiData(data){
     const a=g.awayScore??g.away_score??g.score_away??g.scoreB??null;
     if(h!==null&&h!==undefined&&a!==null&&a!==undefined){
       const hN=parseInt(h), aN=parseInt(a);
-      if(!isNaN(hN)&&!isNaN(aN)){
-        if(!loc.score) loc.score={ft:[hN,aN],ko_winner:"",ko_method:"",_m:false};
-        else{ loc.score.ft=[hN,aN]; loc.score._m=false; }
-      }
+      if(!isNaN(hN)&&!isNaN(aN)) applyApiScore(loc,hN,aN,found.reversed);
     }
-    // Noms des équipes pour les matchs KO encore indéterminés
-    if(loc.team1==="À déterminer"&&t1) loc.team1=t1;
-    if(loc.team2==="À déterminer"&&t2) loc.team2=t2;
   });
 }
 
@@ -705,21 +733,17 @@ function applyFallbackData(data){
   (data.matches||[]).forEach(rem=>{
     const t1=normTeam(rem.team1)||rem.team1;
     const t2=normTeam(rem.team2)||rem.team2;
-    const loc=matches.find(x=>x.date===rem.date&&x.team1===t1&&x.team2===t2);
-    if(!loc)return;
+    const found=findMatchFromApiTeams(t1,t2,rem.date||"");
+    if(!found)return;
 
+    const loc=found.loc;
     if(rem.score && !loc.score?._m){
       const ft=Array.isArray(rem.score.ft)?rem.score.ft:null;
       if(ft && ft.length>=2){
         const h=parseInt(ft[0]),a=parseInt(ft[1]);
-        if(!isNaN(h)&&!isNaN(a)){
-          loc.score={ft:[h,a],ko_winner:"",ko_method:"",_m:false};
-        }
+        if(!isNaN(h)&&!isNaN(a)) applyApiScore(loc,h,a,found.reversed);
       }
     }
-
-    if(loc.team1==="À déterminer"&&t1) loc.team1=t1;
-    if(loc.team2==="À déterminer"&&t2) loc.team2=t2;
   });
 }
 
@@ -892,18 +916,20 @@ function showTab(t){
 }
 
 function getParisKickoffUTC(m){
-  const [year,month,day]=(m.date||"2026-06-11").split("-").map(Number);
-  const [hour,minute]=(m.time||"21:00").split(":").map(Number);
-  // Horaires saisis en heure de Paris (CEST = UTC+2)
-  return new Date(Date.UTC(year,month-1,day,hour-2,minute,0));
+  // Tous les horaires du tableau sont saisis en heure de Paris.
+  // En juin/juillet 2026 Paris est en UTC+2, donc on encode explicitement l'offset
+  // pour éviter que le navigateur du joueur interprète l'heure dans son propre fuseau.
+  return new Date(`${m.date||"2026-06-11"}T${m.time||"21:00"}:00+02:00`);
 }
 function competitionStartDate(){
   const [t1,t2,date,time,grp]=MATCHES_DATA[0];
   return getParisKickoffUTC({date,time});
 }
 function firstKnockoutKickoffUTC(){
-  const firstKo=matches.find(m=>m.phase==="Huitièmes de finale");
-  return firstKo?getParisKickoffUTC(firstKo):competitionStartDate();
+  const kos=matches
+    .filter(m=>!m.grp&&!m.bonus)
+    .sort((a,b)=>getParisKickoffUTC(a)-getParisKickoffUTC(b));
+  return kos[0]?getParisKickoffUTC(kos[0]):competitionStartDate();
 }
 function top4PredictionsOpen(){
   return new Date() < new Date(firstKnockoutKickoffUTC().getTime()-60000);
