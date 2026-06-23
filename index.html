@@ -276,7 +276,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 const SUPABASE_URL = "https://qderhrrkxkhkrundxnwh.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_l5v8RTV9e3C7bIYwtt2tLA_VVssSSJJ";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const APP_VERSION = "safe-no-auto-write-2026-06-23-horaires";
+const APP_VERSION = "safe-no-auto-write-2026-06-23-horaires-safe";
 console.log("CM2026 app version:", APP_VERSION);
 
 const ADMIN_CODE="cm2026admin";
@@ -339,40 +339,40 @@ const MATCHES_DATA = [
   ["Tunisie","Japon","2026-06-21","06:00","Groupe F"],
   ["Espagne","Arabie saoudite","2026-06-21","18:00","Groupe H"],
   ["Belgique","Iran","2026-06-21","21:00","Groupe G"],
-  ["Uruguay","Cap-Vert","2026-06-22","00:00","Groupe H"],
-  ["Nouvelle-Zélande","Égypte","2026-06-22","03:00","Groupe G"],
-  ["Argentine","Autriche","2026-06-22","19:00","Groupe J"],
+  ["Égypte","Nouvelle-Zélande","2026-06-22","00:00","Groupe G"],
+  ["Uruguay","Cap-Vert","2026-06-22","03:00","Groupe H"],
   ["France","Irak","2026-06-22","23:00","Groupe I"],
   ["Norvège","Sénégal","2026-06-23","02:00","Groupe I"],
-  ["Jordanie","Algérie","2026-06-23","05:00","Groupe J"],
+  ["Argentine","Autriche","2026-06-22","19:00","Groupe J"],
+  ["Algérie","Jordanie","2026-06-23","05:00","Groupe J"],
   ["Portugal","Ouzbékistan","2026-06-23","19:00","Groupe K"],
-  ["Angleterre","Ghana","2026-06-23","22:00","Groupe L"],
-  ["Panama","Croatie","2026-06-24","01:00","Groupe L"],
   ["Colombie","RD Congo","2026-06-24","04:00","Groupe K"],
-  ["Suisse","Canada","2026-06-24","21:00","Groupe B"],
-  ["Bosnie-Herzégovine","Qatar","2026-06-24","21:00","Groupe B"],
-  ["Écosse","Brésil","2026-06-25","00:00","Groupe C"],
-  ["Maroc","Haïti","2026-06-25","00:00","Groupe C"],
-  ["Tchéquie","Mexique","2026-06-25","03:00","Groupe A"],
+  ["Angleterre","Ghana","2026-06-23","22:00","Groupe L"],
+  ["Croatie","Panama","2026-06-24","01:00","Groupe L"],
+  ["Mexique","Tchéquie","2026-06-25","03:00","Groupe A"],
   ["Afrique du Sud","Corée du Sud","2026-06-25","03:00","Groupe A"],
-  ["Curaçao","Côte d'Ivoire","2026-06-25","22:00","Groupe E"],
-  ["Équateur","Allemagne","2026-06-25","22:00","Groupe E"],
+  ["Canada","Suisse","2026-06-24","21:00","Groupe B"],
+  ["Bosnie-Herzégovine","Qatar","2026-06-24","21:00","Groupe B"],
+  ["États-Unis","Turquie","2026-06-26","04:00","Groupe D"],
+  ["Australie","Paraguay","2026-06-26","04:00","Groupe D"],
+  ["Allemagne","Équateur","2026-06-25","22:00","Groupe E"],
+  ["Côte d'Ivoire","Curaçao","2026-06-25","22:00","Groupe E"],
+  ["Pays-Bas","Tunisie","2026-06-26","01:00","Groupe F"],
   ["Japon","Suède","2026-06-26","01:00","Groupe F"],
-  ["Tunisie","Pays-Bas","2026-06-26","01:00","Groupe F"],
-  ["Turquie","États-Unis","2026-06-26","04:00","Groupe D"],
-  ["Paraguay","Australie","2026-06-26","04:00","Groupe D"],
-  ["Norvège","France","2026-06-26","21:00","Groupe I"],
+  ["Brésil","Écosse","2026-06-25","00:00","Groupe C"],
+  ["Maroc","Haïti","2026-06-25","00:00","Groupe C"],
+  ["France","Norvège","2026-06-26","21:00","Groupe I"],
   ["Sénégal","Irak","2026-06-26","21:00","Groupe I"],
+  ["Espagne","Uruguay","2026-06-27","02:00","Groupe H"],
   ["Cap-Vert","Arabie saoudite","2026-06-27","02:00","Groupe H"],
-  ["Uruguay","Espagne","2026-06-27","02:00","Groupe H"],
-  ["Égypte","Iran","2026-06-27","05:00","Groupe G"],
-  ["Nouvelle-Zélande","Belgique","2026-06-27","05:00","Groupe G"],
-  ["Panama","Angleterre","2026-06-27","23:00","Groupe L"],
-  ["Croatie","Ghana","2026-06-27","23:00","Groupe L"],
-  ["Colombie","Portugal","2026-06-28","01:30","Groupe K"],
-  ["RD Congo","Ouzbékistan","2026-06-28","01:30","Groupe K"],
+  ["Belgique","Nouvelle-Zélande","2026-06-27","05:00","Groupe G"],
+  ["Iran","Égypte","2026-06-27","05:00","Groupe G"],
+  ["Argentine","Jordanie","2026-06-28","04:00","Groupe J"],
   ["Algérie","Autriche","2026-06-28","04:00","Groupe J"],
-  ["Jordanie","Argentine","2026-06-28","04:00","Groupe J"],
+  ["Portugal","Colombie","2026-06-28","01:30","Groupe K"],
+  ["RD Congo","Ouzbékistan","2026-06-28","01:30","Groupe K"],
+  ["Angleterre","Panama","2026-06-27","23:00","Groupe L"],
+  ["Croatie","Ghana","2026-06-27","23:00","Groupe L"],
 ];
 
 const KO_DATA = [
@@ -917,7 +917,7 @@ function showTab(t){
 
 function getParisKickoffUTC(m){
   // Tous les horaires du tableau sont saisis en heure de Paris.
-  // En juin/juillet 2026 Paris est en UTC+2, donc on encode explicitement l'offset
+  // En juin/juillet 2026 Paris est en UTC+2 : on encode l'offset explicitement
   // pour éviter que le navigateur du joueur interprète l'heure dans son propre fuseau.
   return new Date(`${m.date||"2026-06-11"}T${m.time||"21:00"}:00+02:00`);
 }
@@ -1257,7 +1257,9 @@ function renderDaySelector(){
 function renderMatches(){
   const c=document.getElementById("mlist");
   if(!selectedMatchDate)selectedMatchDate=getDefaultMatchDate();
-  const dayMatches=matches.filter(m=>m.date===selectedMatchDate);
+  const dayMatches=matches
+    .filter(m=>m.date===selectedMatchDate)
+    .sort((a,b)=>getParisKickoffUTC(a)-getParisKickoffUTC(b));
   c.innerHTML=renderDaySelector();
   if(!dayMatches.length){c.innerHTML+=`<div style="text-align:center;padding:48px 24px;color:var(--tx3)">Aucun match ce jour</div>`;return;}
   let cur=null;
